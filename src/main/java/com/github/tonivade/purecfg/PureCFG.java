@@ -14,7 +14,12 @@ import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Instance;
 import com.github.tonivade.purefun.data.NonEmptyString;
 import com.github.tonivade.purefun.free.FreeAp;
+import com.github.tonivade.purefun.instances.IdInstances;
+import com.github.tonivade.purefun.type.Id;
 import com.github.tonivade.purefun.typeclasses.Applicative;
+import com.github.tonivade.purefun.typeclasses.FunctionK;
+
+import java.util.Properties;
 
 import static java.util.Objects.requireNonNull;
 
@@ -37,6 +42,10 @@ public final class PureCFG<T> {
 
   public <R> PureCFG<R> ap(PureCFG<Function1<T, R>> apply) {
     return new PureCFG<>(value.ap(apply.value));
+  }
+
+  public T fromProperties(Properties properties) {
+    return value.foldMap(new PropertiesTransformer(properties), IdInstances.applicative()).fix1(Id::narrowK).get();
   }
 
   public static <A, B, C> PureCFG<C> map2(PureCFG<A> fa, PureCFG<B> fb, Function2<A, B, C> apply) {
@@ -72,6 +81,29 @@ public final class PureCFG<T> {
 
   public static Applicative<PureCFG.µ> applicative() {
     return PureCFGApplicative.instance();
+  }
+
+  private static final class PropertiesTransformer implements FunctionK<DSL.µ, Id.µ> {
+
+    private final Properties properties;
+
+    private PropertiesTransformer(Properties properties) {
+      this.properties = requireNonNull(properties);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> Higher1<Id.µ, T> apply(Higher1<DSL.µ, T> from) {
+      DSL<T> dsl = from.fix1(DSL::narrowK);
+      String property = properties.getProperty(dsl.getKey());
+      if (dsl instanceof DSL.ReadInt) {
+        return (Higher1<Id.µ, T>) Id.of(Integer.parseInt(property)).kind1();
+      }
+      if (dsl instanceof DSL.ReadString) {
+        return (Higher1<Id.µ, T>) Id.of(property).kind1();
+      }
+      throw new IllegalStateException();
+    }
   }
 }
 
