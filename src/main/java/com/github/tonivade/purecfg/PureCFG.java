@@ -21,6 +21,7 @@ import com.github.tonivade.purefun.typeclasses.FunctionK;
 
 import java.util.Properties;
 
+import static com.github.tonivade.purefun.Function1.identity;
 import static java.util.Objects.requireNonNull;
 
 @HigherKind
@@ -45,7 +46,7 @@ public final class PureCFG<T> {
   }
 
   public T fromProperties(Properties properties) {
-    return value.foldMap(new PropertiesTransformer(properties), IdInstances.applicative()).fix1(Id::narrowK).get();
+    return value.foldMap(new PropertiesInterpreter(properties), IdInstances.applicative()).fix1(Id::narrowK).get();
   }
 
   public static <A, B, C> PureCFG<C> map2(PureCFG<A> fa, PureCFG<B> fb, Function2<A, B, C> apply) {
@@ -72,22 +73,22 @@ public final class PureCFG<T> {
   }
 
   public static PureCFG<Integer> readInt(NonEmptyString key) {
-    return new PureCFG<>(new DSL.ReadInt(key));
+    return new PureCFG<>(new DSL.ReadInt<>(key, identity()));
   }
 
   public static PureCFG<String> readString(NonEmptyString key) {
-    return new PureCFG<>(new DSL.ReadString(key));
+    return new PureCFG<>(new DSL.ReadString<>(key, identity()));
   }
 
   public static Applicative<PureCFG.µ> applicative() {
     return PureCFGApplicative.instance();
   }
 
-  private static final class PropertiesTransformer implements FunctionK<DSL.µ, Id.µ> {
+  private static final class PropertiesInterpreter implements FunctionK<DSL.µ, Id.µ> {
 
     private final Properties properties;
 
-    private PropertiesTransformer(Properties properties) {
+    private PropertiesInterpreter(Properties properties) {
       this.properties = requireNonNull(properties);
     }
 
@@ -95,12 +96,14 @@ public final class PureCFG<T> {
     @SuppressWarnings("unchecked")
     public <T> Higher1<Id.µ, T> apply(Higher1<DSL.µ, T> from) {
       DSL<T> dsl = from.fix1(DSL::narrowK);
-      String property = properties.getProperty(dsl.getKey());
+      String property = properties.getProperty(dsl.key());
       if (dsl instanceof DSL.ReadInt) {
-        return (Higher1<Id.µ, T>) Id.of(Integer.parseInt(property)).kind1();
+        DSL.ReadInt<T> readInt = (DSL.ReadInt<T>) dsl;
+        return Id.of(Integer.parseInt(property)).map(readInt.value());
       }
       if (dsl instanceof DSL.ReadString) {
-        return (Higher1<Id.µ, T>) Id.of(property).kind1();
+        DSL.ReadString<T> readString = (DSL.ReadString<T>) dsl;
+        return Id.of(property).map(readString.value());
       }
       throw new IllegalStateException();
     }
