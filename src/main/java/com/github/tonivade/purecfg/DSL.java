@@ -48,4 +48,24 @@ public interface DSL<T> {
       super(key, value);
     }
   }
+
+  final class ReadConfig<T> implements DSL<T> {
+
+    private final String key;
+    private final PureCFG<T> config;
+
+    protected ReadConfig(NonEmptyString key, PureCFG<T> config) {
+      this.key = requireNonNull(key).get();
+      this.config = requireNonNull(config);
+    }
+
+    @Override
+    public String key() {
+      return key;
+    }
+
+    public PureCFG<T> next() {
+      return config;
+    }
+  }
 }

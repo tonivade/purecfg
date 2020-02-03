@@ -12,6 +12,7 @@ import com.github.tonivade.purefun.Function5;
 import com.github.tonivade.purefun.Higher1;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Instance;
+import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.data.NonEmptyString;
 import com.github.tonivade.purefun.free.FreeAp;
 import com.github.tonivade.purefun.instances.IdInstances;
@@ -33,6 +34,10 @@ public final class PureCFG<T> {
     this(FreeAp.lift(value.kind1()));
   }
 
+  protected FreeAp<DSL.µ, T> value() {
+    return value;
+  }
+
   private PureCFG(FreeAp<DSL.µ, T> value) {
     this.value = requireNonNull(value);
   }
@@ -43,6 +48,10 @@ public final class PureCFG<T> {
 
   public <R> PureCFG<R> ap(PureCFG<Function1<T, R>> apply) {
     return new PureCFG<>(value.ap(apply.value));
+  }
+
+  protected <G extends Kind> Higher1<G, T> foldMap(FunctionK<DSL.µ, G> functionK, Applicative<G> applicative) {
+    return value.foldMap(functionK, applicative);
   }
 
   public T fromProperties(Properties properties) {
@@ -72,12 +81,16 @@ public final class PureCFG<T> {
     return new PureCFG<>(FreeAp.pure(value));
   }
 
-  public static PureCFG<Integer> readInt(NonEmptyString key) {
-    return new PureCFG<>(new DSL.ReadInt<>(key, identity()));
+  public static PureCFG<Integer> readInt(String key) {
+    return new PureCFG<>(new DSL.ReadInt<>(NonEmptyString.of(key), identity()));
   }
 
-  public static PureCFG<String> readString(NonEmptyString key) {
-    return new PureCFG<>(new DSL.ReadString<>(key, identity()));
+  public static PureCFG<String> readString(String key) {
+    return new PureCFG<>(new DSL.ReadString<>(NonEmptyString.of(key), identity()));
+  }
+
+  public static <T> PureCFG<T> readConfig(String key, PureCFG<T> cfg) {
+    return new PureCFG<>(new DSL.ReadConfig<>(NonEmptyString.of(key), cfg));
   }
 
   public static Applicative<PureCFG.µ> applicative() {
@@ -86,26 +99,55 @@ public final class PureCFG<T> {
 
   private static final class PropertiesInterpreter implements FunctionK<DSL.µ, Id.µ> {
 
+    private final Key baseKey;
     private final Properties properties;
 
     private PropertiesInterpreter(Properties properties) {
+      this(Key.empty(), properties);
+    }
+
+    private PropertiesInterpreter(String baseKey, Properties properties) {
+      this(Key.with(baseKey), properties);
+    }
+
+    private PropertiesInterpreter(Key baseKey, Properties properties) {
+      this.baseKey = requireNonNull(baseKey);
       this.properties = requireNonNull(properties);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> Higher1<Id.µ, T> apply(Higher1<DSL.µ, T> from) {
       DSL<T> dsl = from.fix1(DSL::narrowK);
-      String property = properties.getProperty(dsl.key());
+      String key = baseKey.extend(dsl.key());
       if (dsl instanceof DSL.ReadInt) {
         DSL.ReadInt<T> readInt = (DSL.ReadInt<T>) dsl;
-        return Id.of(Integer.parseInt(property)).map(readInt.value());
+        return Id.of(Integer.parseInt(properties.getProperty(key))).map(readInt.value());
       }
       if (dsl instanceof DSL.ReadString) {
         DSL.ReadString<T> readString = (DSL.ReadString<T>) dsl;
-        return Id.of(property).map(readString.value());
+        return Id.of(properties.getProperty(key)).map(readString.value());
+      }
+      if (dsl instanceof DSL.ReadConfig) {
+        DSL.ReadConfig<T> readConfig = (DSL.ReadConfig<T>) dsl;
+        return readConfig.next().foldMap(
+            new PropertiesInterpreter(key, properties), IdInstances.applicative()).fix1(Id::narrowK);
       }
       throw new IllegalStateException();
+    }
+  }
+
+  @FunctionalInterface
+  private interface Key {
+
+    String extend(String key);
+
+    static Key with(String baseKey) {
+      requireNonNull(baseKey);
+      return key -> baseKey + "." + key;
+    }
+
+    static Key empty() {
+      return key -> key;
     }
   }
 }

@@ -1,11 +1,14 @@
+/*
+ * Copyright (c) 2020, Antonio Gabriel Muñoz Conejo <antoniogmc at gmail dot com>
+ * Distributed under the terms of the MIT License
+ */
 package com.github.tonivade.purecfg;
 
-import com.github.tonivade.purefun.data.NonEmptyString;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
+import static com.github.tonivade.purecfg.PureCFG.readConfig;
 import static com.github.tonivade.purecfg.PureCFG.readInt;
 import static com.github.tonivade.purecfg.PureCFG.readString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,10 +17,12 @@ class PureCFGTest {
 
   @Test
   void test() {
-    PureCFG<String> host = readString(NonEmptyString.of("server.host"));
-    PureCFG<Integer> port = readInt(NonEmptyString.of("server.port"));
+    PureCFG<String> host = readString("host");
+    PureCFG<Integer> port = readInt("port");
 
-    PureCFG<Config> cfg = PureCFG.map2(host, port, Config::new);
+    PureCFG<Config> hostAndPort = PureCFG.map2(host, port, Config::new);
+
+    PureCFG<Config> cfg = readConfig("server", hostAndPort);
 
     Properties properties = new Properties();
     properties.put("server.host", "localhost");
