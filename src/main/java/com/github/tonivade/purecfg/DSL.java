@@ -4,8 +4,9 @@
  */
 package com.github.tonivade.purecfg;
 
-import com.github.tonivade.purefun.Function1;
+import com.github.tonivade.purefun.Higher1;
 import com.github.tonivade.purefun.HigherKind;
+import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.data.NonEmptyString;
 
 import static java.util.Objects.requireNonNull;
@@ -15,57 +16,81 @@ public interface DSL<T> {
 
   String key();
 
-  abstract class AbstractRead<T, R> implements DSL<R> {
+  <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor);
 
-    private final String key;
-    private final Function1<T, R> value;
+  interface Visitor<F extends Kind> {
+    Higher1<F, String> visit(ReadString value);
+    Higher1<F, Integer> visit(ReadInt value);
+    Higher1<F, Boolean> visit(ReadBoolean value);
+    <T> Higher1<F, T> visit(ReadConfig<T> value);
+  }
 
-    private AbstractRead(NonEmptyString key, Function1<T, R> value) {
-      this.key = requireNonNull(key).get();
-      this.value = requireNonNull(value);
+  abstract class AbstractRead<T> implements DSL<T> {
+
+    private final NonEmptyString key;
+
+    private AbstractRead(String key) {
+      this.key = NonEmptyString.of(key);
     }
 
     @Override
     public String key() {
-      return key;
-    }
-
-    public Function1<T, R> value() {
-      return value;
+      return key.get();
     }
   }
 
-  final class ReadInt<T> extends AbstractRead<Integer, T> {
+  final class ReadInt extends AbstractRead<Integer> {
 
-    protected ReadInt(NonEmptyString key, Function1<Integer, T> value) {
-      super(key, value);
+    protected ReadInt(String key) {
+      super(key);
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, Integer> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
     }
   }
 
-  final class ReadString<T> extends AbstractRead<String, T> {
+  final class ReadString extends AbstractRead<String> {
 
-    protected ReadString(NonEmptyString key, Function1<String, T> value) {
-      super(key, value);
+    protected ReadString(String key) {
+      super(key);
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, String> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
     }
   }
 
-  final class ReadConfig<T> implements DSL<T> {
+  final class ReadBoolean extends AbstractRead<Boolean> {
 
-    private final String key;
+    protected ReadBoolean(String key) {
+      super(key);
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, Boolean> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
+    }
+  }
+
+  final class ReadConfig<T> extends AbstractRead<T> {
+
     private final PureCFG<T> config;
 
-    protected ReadConfig(NonEmptyString key, PureCFG<T> config) {
-      this.key = requireNonNull(key).get();
+    protected ReadConfig(String key, PureCFG<T> config) {
+      super(key);
       this.config = requireNonNull(config);
-    }
-
-    @Override
-    public String key() {
-      return key;
     }
 
     public PureCFG<T> next() {
       return config;
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
     }
   }
 }

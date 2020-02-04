@@ -11,6 +11,7 @@ import java.util.Properties;
 import static com.github.tonivade.purecfg.PureCFG.readConfig;
 import static com.github.tonivade.purecfg.PureCFG.readInt;
 import static com.github.tonivade.purecfg.PureCFG.readString;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PureCFGTest {
@@ -27,8 +28,14 @@ class PureCFGTest {
     Properties properties = new Properties();
     properties.put("server.host", "localhost");
     properties.put("server.port", "8080");
-    Config config = cfg.fromProperties(properties);
 
+    assertAll(
+        () -> assertConfig(cfg.unsafeRun(properties)),
+        () -> assertConfig(cfg.safeRun(properties).get())
+    );
+  }
+
+  private void assertConfig(Config config) {
     assertEquals("localhost", config.getHost());
     assertEquals(8080, config.getPort());
   }

@@ -13,16 +13,16 @@ import com.github.tonivade.purefun.Higher1;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Instance;
 import com.github.tonivade.purefun.Kind;
-import com.github.tonivade.purefun.data.NonEmptyString;
 import com.github.tonivade.purefun.free.FreeAp;
 import com.github.tonivade.purefun.instances.IdInstances;
+import com.github.tonivade.purefun.instances.OptionInstances;
 import com.github.tonivade.purefun.type.Id;
+import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.typeclasses.Applicative;
 import com.github.tonivade.purefun.typeclasses.FunctionK;
 
 import java.util.Properties;
 
-import static com.github.tonivade.purefun.Function1.identity;
 import static java.util.Objects.requireNonNull;
 
 @HigherKind
@@ -32,10 +32,6 @@ public final class PureCFG<T> {
 
   private PureCFG(DSL<T> value) {
     this(FreeAp.lift(value.kind1()));
-  }
-
-  protected FreeAp<DSL.µ, T> value() {
-    return value;
   }
 
   private PureCFG(FreeAp<DSL.µ, T> value) {
@@ -54,8 +50,16 @@ public final class PureCFG<T> {
     return value.foldMap(functionK, applicative);
   }
 
-  public T fromProperties(Properties properties) {
-    return value.foldMap(new PropertiesInterpreter(properties), IdInstances.applicative()).fix1(Id::narrowK).get();
+  public T unsafeRun(Properties properties) {
+    return value.foldMap(
+        new PropertiesInterpreter<>(
+            new IdVisitor(Key.empty(), properties)), IdInstances.applicative()).fix1(Id::narrowK).get();
+  }
+
+  public Option<T> safeRun(Properties properties) {
+    return value.foldMap(
+        new PropertiesInterpreter<>(
+            new OptionVisitor(Key.empty(), properties)), OptionInstances.applicative()).fix1(Option::narrowK);
   }
 
   public static <A, B, C> PureCFG<C> map2(PureCFG<A> fa, PureCFG<B> fb, Function2<A, B, C> apply) {
@@ -82,72 +86,121 @@ public final class PureCFG<T> {
   }
 
   public static PureCFG<Integer> readInt(String key) {
-    return new PureCFG<>(new DSL.ReadInt<>(NonEmptyString.of(key), identity()));
+    return new PureCFG<>(new DSL.ReadInt(key));
   }
 
   public static PureCFG<String> readString(String key) {
-    return new PureCFG<>(new DSL.ReadString<>(NonEmptyString.of(key), identity()));
+    return new PureCFG<>(new DSL.ReadString(key));
+  }
+
+  public static PureCFG<Boolean> readBoolean(String key) {
+    return new PureCFG<>(new DSL.ReadBoolean(key));
   }
 
   public static <T> PureCFG<T> readConfig(String key, PureCFG<T> cfg) {
-    return new PureCFG<>(new DSL.ReadConfig<>(NonEmptyString.of(key), cfg));
+    return new PureCFG<>(new DSL.ReadConfig<>(key, cfg));
   }
 
   public static Applicative<PureCFG.µ> applicative() {
     return PureCFGApplicative.instance();
   }
 
-  private static final class PropertiesInterpreter implements FunctionK<DSL.µ, Id.µ> {
+  private static final class PropertiesInterpreter<F extends Kind> implements FunctionK<DSL.µ, F> {
+
+    private final DSL.Visitor<F> visitor;
+
+    private PropertiesInterpreter(DSL.Visitor<F> visitor) {
+      this.visitor = requireNonNull(visitor);
+    }
+
+    @Override
+    public <T> Higher1<F, T> apply(Higher1<DSL.µ, T> from) {
+      return from.fix1(DSL::narrowK).accept(visitor);
+    }
+  }
+
+  private static final class IdVisitor implements DSL.Visitor<Id.µ> {
 
     private final Key baseKey;
     private final Properties properties;
 
-    private PropertiesInterpreter(Properties properties) {
-      this(Key.empty(), properties);
-    }
-
-    private PropertiesInterpreter(String baseKey, Properties properties) {
-      this(Key.with(baseKey), properties);
-    }
-
-    private PropertiesInterpreter(Key baseKey, Properties properties) {
-      this.baseKey = requireNonNull(baseKey);
-      this.properties = requireNonNull(properties);
+    private IdVisitor(Key baseKey, Properties properties) {
+      this.baseKey = baseKey;
+      this.properties = properties;
     }
 
     @Override
-    public <T> Higher1<Id.µ, T> apply(Higher1<DSL.µ, T> from) {
-      DSL<T> dsl = from.fix1(DSL::narrowK);
-      String key = baseKey.extend(dsl.key());
-      if (dsl instanceof DSL.ReadInt) {
-        DSL.ReadInt<T> readInt = (DSL.ReadInt<T>) dsl;
-        return Id.of(Integer.parseInt(properties.getProperty(key))).map(readInt.value());
-      }
-      if (dsl instanceof DSL.ReadString) {
-        DSL.ReadString<T> readString = (DSL.ReadString<T>) dsl;
-        return Id.of(properties.getProperty(key)).map(readString.value());
-      }
-      if (dsl instanceof DSL.ReadConfig) {
-        DSL.ReadConfig<T> readConfig = (DSL.ReadConfig<T>) dsl;
-        return readConfig.next().foldMap(
-            new PropertiesInterpreter(key, properties), IdInstances.applicative()).fix1(Id::narrowK);
-      }
-      throw new IllegalStateException();
+    public Higher1<Id.µ, String> visit(DSL.ReadString value) {
+      return Id.of(properties.getProperty(baseKey.extend(value))).kind1();
+    }
+
+    @Override
+    public Higher1<Id.µ, Integer> visit(DSL.ReadInt value) {
+      return Id.of(Integer.parseInt(properties.getProperty(baseKey.extend(value)))).kind1();
+    }
+
+    @Override
+    public Higher1<Id.µ, Boolean> visit(DSL.ReadBoolean value) {
+      return Id.of(Boolean.parseBoolean(properties.getProperty(baseKey.extend(value)))).kind1();
+    }
+
+    @Override
+    public <A> Higher1<Id.µ, A> visit(DSL.ReadConfig<A> value) {
+      return value.next().foldMap(nestedInterpreter(value), IdInstances.applicative()).fix1(Id::narrowK);
+    }
+
+    private <A> PropertiesInterpreter<Id.µ> nestedInterpreter(DSL.ReadConfig<A> value) {
+      return new PropertiesInterpreter<>(new IdVisitor(Key.with(value.key()), properties));
+    }
+  }
+
+  private static final class OptionVisitor implements DSL.Visitor<Option.µ> {
+
+    private final Key baseKey;
+    private final Properties properties;
+
+    private OptionVisitor(Key baseKey, Properties properties) {
+      this.baseKey = baseKey;
+      this.properties = properties;
+    }
+
+    @Override
+    public Higher1<Option.µ, String> visit(DSL.ReadString value) {
+      return Option.of(properties.getProperty(baseKey.extend(value))).kind1();
+    }
+
+    @Override
+    public Higher1<Option.µ, Integer> visit(DSL.ReadInt value) {
+      return Option.of(properties.getProperty(baseKey.extend(value))).map(Integer::parseInt);
+    }
+
+    @Override
+    public Higher1<Option.µ, Boolean> visit(DSL.ReadBoolean value) {
+      return Option.of(properties.getProperty(baseKey.extend(value))).map(Boolean::parseBoolean);
+    }
+
+    @Override
+    public <A> Higher1<Option.µ, A> visit(DSL.ReadConfig<A> value) {
+      return value.next().foldMap(nestedInterpreter(value), OptionInstances.applicative()).fix1(Option::narrowK);
+    }
+
+    private <A> PropertiesInterpreter<Option.µ> nestedInterpreter(DSL.ReadConfig<A> value) {
+      return new PropertiesInterpreter<>(new OptionVisitor(Key.with(value.key()), properties));
     }
   }
 
   @FunctionalInterface
   private interface Key {
 
-    String extend(String key);
+    String extend(DSL<?> dsl);
 
     static Key with(String baseKey) {
       requireNonNull(baseKey);
-      return key -> baseKey + "." + key;
+      return dsl -> baseKey + "." + dsl.key();
     }
 
     static Key empty() {
-      return key -> key;
+      return DSL::key;
     }
   }
 }
