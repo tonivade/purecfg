@@ -10,14 +10,17 @@ import com.github.tonivade.purefun.Function3;
 import com.github.tonivade.purefun.Function4;
 import com.github.tonivade.purefun.Function5;
 import com.github.tonivade.purefun.Higher1;
+import com.github.tonivade.purefun.Higher2;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Instance;
 import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.free.FreeAp;
 import com.github.tonivade.purefun.instances.IdInstances;
 import com.github.tonivade.purefun.instances.OptionInstances;
+import com.github.tonivade.purefun.instances.ValidationInstances;
 import com.github.tonivade.purefun.type.Id;
 import com.github.tonivade.purefun.type.Option;
+import com.github.tonivade.purefun.type.Validation;
 import com.github.tonivade.purefun.typeclasses.Applicative;
 import com.github.tonivade.purefun.typeclasses.FunctionK;
 
@@ -52,14 +55,20 @@ public final class PureCFG<T> {
 
   public T unsafeRun(Properties properties) {
     return value.foldMap(
-        new PropertiesInterpreter<>(
-            new IdVisitor(Key.empty(), properties)), IdInstances.applicative()).fix1(Id::narrowK).get();
+        new PropertiesInterpreter<>(new IdVisitor(Key.empty(), properties)),
+        IdInstances.applicative()).fix1(Id::narrowK).get();
   }
 
   public Option<T> safeRun(Properties properties) {
     return value.foldMap(
-        new PropertiesInterpreter<>(
-            new OptionVisitor(Key.empty(), properties)), OptionInstances.applicative()).fix1(Option::narrowK);
+        new PropertiesInterpreter<>(new OptionVisitor(Key.empty(), properties)),
+        OptionInstances.applicative()).fix1(Option::narrowK);
+  }
+
+  public Validation<Validation.Result<String>, T> validatedRun(Properties properties) {
+    return value.foldMap(
+        new PropertiesInterpreter<>(new ValidationVisitor(Key.empty(), properties)),
+        ValidationInstances.applicative(ValidationInstances.semigroup())).fix1(Validation::narrowK);
   }
 
   public static <A, B, C> PureCFG<C> map2(PureCFG<A> fa, PureCFG<B> fb, Function2<A, B, C> apply) {
@@ -186,6 +195,53 @@ public final class PureCFG<T> {
 
     private <A> PropertiesInterpreter<Option.µ> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new PropertiesInterpreter<>(new OptionVisitor(Key.with(value.key()), properties));
+    }
+  }
+
+  private static final class ValidationVisitor implements DSL.Visitor<Higher1<Validation.µ, Validation.Result<String>>> {
+
+    private final Key baseKey;
+    private final Properties properties;
+
+    private ValidationVisitor(Key baseKey, Properties properties) {
+      this.baseKey = baseKey;
+      this.properties = properties;
+    }
+
+    @Override
+    public Higher2<Validation.µ, Validation.Result<String>, String> visit(DSL.ReadString value) {
+      return Option.of(properties.getProperty(baseKey.extend(value)))
+          .fold(() -> invalid(value), this::valid).kind2();
+    }
+
+    @Override
+    public Higher2<Validation.µ, Validation.Result<String>, Integer> visit(DSL.ReadInt value) {
+      return Option.of(properties.getProperty(baseKey.extend(value))).map(Integer::parseInt)
+        .fold(() -> invalid(value), this::valid).kind2();
+    }
+
+    @Override
+    public Higher2<Validation.µ, Validation.Result<String>, Boolean> visit(DSL.ReadBoolean value) {
+      return Option.of(properties.getProperty(baseKey.extend(value))).map(Boolean::parseBoolean)
+          .fold(() -> invalid(value), this::valid).kind2();
+    }
+
+    @Override
+    public <A> Higher2<Validation.µ, Validation.Result<String>, A> visit(DSL.ReadConfig<A> value) {
+      return value.next().foldMap(nestedInterpreter(value), ValidationInstances.applicative(ValidationInstances.semigroup()))
+          .fix1(Validation::narrowK);
+    }
+
+    private <A> PropertiesInterpreter<Higher1<Validation.µ, Validation.Result<String>>> nestedInterpreter(DSL.ReadConfig<A> value) {
+      return new PropertiesInterpreter<>(new ValidationVisitor(Key.with(value.key()), properties));
+    }
+
+    private <T> Validation<Validation.Result<String>, T> invalid(DSL<T> value) {
+      return Validation.invalid(Validation.Result.of("key not found: " + baseKey.extend(value)));
+    }
+
+    private <T> Validation<Validation.Result<String>, T> valid(T value) {
+      return Validation.valid(value);
     }
   }
 

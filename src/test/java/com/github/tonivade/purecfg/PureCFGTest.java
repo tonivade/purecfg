@@ -4,58 +4,96 @@
  */
 package com.github.tonivade.purecfg;
 
+import com.github.tonivade.purefun.type.Option;
+import com.github.tonivade.purefun.type.Validation;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
+import static com.github.tonivade.purecfg.PureCFG.readBoolean;
 import static com.github.tonivade.purecfg.PureCFG.readConfig;
 import static com.github.tonivade.purecfg.PureCFG.readInt;
 import static com.github.tonivade.purecfg.PureCFG.readString;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PureCFGTest {
 
   @Test
   void test() {
-    PureCFG<String> host = readString("host");
-    PureCFG<Integer> port = readInt("port");
-
-    PureCFG<Config> hostAndPort = PureCFG.map2(host, port, Config::new);
-
-    PureCFG<Config> cfg = readConfig("server", hostAndPort);
+    PureCFG<Config> cfg = program();
 
     Properties properties = new Properties();
     properties.put("server.host", "localhost");
     properties.put("server.port", "8080");
+    properties.put("server.active", "true");
 
     assertAll(
         () -> assertConfig(cfg.unsafeRun(properties)),
-        () -> assertConfig(cfg.safeRun(properties).get())
+        () -> assertConfig(cfg.safeRun(properties).get()),
+        () -> assertConfig(cfg.validatedRun(properties).get())
     );
+  }
+
+  @Test
+  void testError() {
+    PureCFG<Config> cfg = program();
+
+    Properties properties = new Properties();
+
+    assertAll(
+        () -> assertThrows(NullPointerException.class, () -> cfg.unsafeRun(properties)),
+        () -> assertEquals(Option.none(), cfg.safeRun(properties)),
+        () -> assertEquals(
+            Validation.invalid(
+                Validation.Result.of(
+                    "key not found: server.active",
+                    "key not found: server.port",
+                    "key not found: server.host")),
+            cfg.validatedRun(properties))
+    );
+  }
+
+  private PureCFG<Config> program() {
+    PureCFG<String> host = readString("host");
+    PureCFG<Integer> port = readInt("port");
+    PureCFG<Boolean> active = readBoolean("active");
+
+    PureCFG<Config> hostAndPort = PureCFG.map3(host, port, active, Config::new);
+
+    return readConfig("server", hostAndPort);
   }
 
   private void assertConfig(Config config) {
     assertEquals("localhost", config.getHost());
     assertEquals(8080, config.getPort());
+    assertTrue(config.isActive());
   }
 }
 
 final class Config {
   private final String host;
-  private final Integer port;
+  private final int port;
+  private final boolean active;
 
-  Config(String host, Integer port) {
+  Config(String host, int port, boolean active) {
     this.host = host;
     this.port = port;
+    this.active = active;
   }
 
   public String getHost() {
     return host;
   }
 
-  public Integer getPort() {
+  public int getPort() {
     return port;
+  }
+
+  public boolean isActive() {
+    return active;
   }
 
   @Override
@@ -63,6 +101,7 @@ final class Config {
     return "Config{" +
         "host='" + host + '\'' +
         ", port=" + port +
+        ", active=" + active +
         '}';
   }
 }
