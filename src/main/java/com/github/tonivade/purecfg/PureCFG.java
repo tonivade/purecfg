@@ -134,8 +134,8 @@ public final class PureCFG<T> {
     private final Properties properties;
 
     private IdVisitor(Key baseKey, Properties properties) {
-      this.baseKey = baseKey;
-      this.properties = properties;
+      this.baseKey = requireNonNull(baseKey);
+      this.properties = requireNonNull(properties);
     }
 
     @Override
@@ -169,8 +169,8 @@ public final class PureCFG<T> {
     private final Properties properties;
 
     private OptionVisitor(Key baseKey, Properties properties) {
-      this.baseKey = baseKey;
-      this.properties = properties;
+      this.baseKey = requireNonNull(baseKey);
+      this.properties = requireNonNull(properties);
     }
 
     @Override
@@ -180,12 +180,12 @@ public final class PureCFG<T> {
 
     @Override
     public Higher1<Option.µ, Integer> visit(DSL.ReadInt value) {
-      return Option.of(properties.getProperty(baseKey.extend(value))).map(Integer::parseInt);
+      return Option.of(properties.getProperty(baseKey.extend(value))).map(Integer::parseInt).kind1();
     }
 
     @Override
     public Higher1<Option.µ, Boolean> visit(DSL.ReadBoolean value) {
-      return Option.of(properties.getProperty(baseKey.extend(value))).map(Boolean::parseBoolean);
+      return Option.of(properties.getProperty(baseKey.extend(value))).map(Boolean::parseBoolean).kind1();
     }
 
     @Override
@@ -204,8 +204,8 @@ public final class PureCFG<T> {
     private final Properties properties;
 
     private ValidationVisitor(Key baseKey, Properties properties) {
-      this.baseKey = baseKey;
-      this.properties = properties;
+      this.baseKey = requireNonNull(baseKey);
+      this.properties = requireNonNull(properties);
     }
 
     @Override

@@ -74,6 +74,7 @@ class PureCFGTest {
 }
 
 final class Config {
+
   private final String host;
   private final int port;
   private final boolean active;
