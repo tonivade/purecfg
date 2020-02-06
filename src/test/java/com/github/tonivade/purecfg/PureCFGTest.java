@@ -56,6 +56,15 @@ class PureCFGTest {
     );
   }
 
+  @Test
+  void analyze() {
+    PureCFG<Config> program = program();
+
+    String result = program.describe();
+
+    assertEquals("- server.host: String\n- server.port: Integer\n- server.active: Boolean\n", result);
+  }
+
   private PureCFG<Config> program() {
     PureCFG<String> host = readString("host");
     PureCFG<Integer> port = readInt("port");
