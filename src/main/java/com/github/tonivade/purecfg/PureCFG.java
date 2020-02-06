@@ -68,7 +68,7 @@ public final class PureCFG<T> {
   public Validation<Validation.Result<String>, T> validatedRun(Properties properties) {
     return value.foldMap(
         new PropertiesInterpreter<>(new ValidationVisitor(Key.empty(), properties)),
-        ValidationInstances.applicative(ValidationInstances.semigroup())).fix1(Validation::narrowK);
+        ValidationInstances.applicative(Validation.Result::append)).fix1(Validation::narrowK);
   }
 
   public static <A, B, C> PureCFG<C> map2(PureCFG<A> fa, PureCFG<B> fb, Function2<A, B, C> apply) {
@@ -228,7 +228,7 @@ public final class PureCFG<T> {
 
     @Override
     public <A> Higher2<Validation.µ, Validation.Result<String>, A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), ValidationInstances.applicative(ValidationInstances.semigroup()))
+      return value.next().foldMap(nestedInterpreter(value), ValidationInstances.applicative(Validation.Result::append))
           .fix1(Validation::narrowK);
     }
 
