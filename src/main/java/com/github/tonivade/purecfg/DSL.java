@@ -7,7 +7,10 @@ package com.github.tonivade.purecfg;
 import com.github.tonivade.purefun.Higher1;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;
+import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.data.NonEmptyString;
+import com.github.tonivade.purefun.data.Sequence;
+import com.github.tonivade.purefun.type.Id;
 
 import static java.util.Objects.requireNonNull;
 
@@ -22,6 +25,7 @@ public interface DSL<T> {
     Higher1<F, String> visit(ReadString value);
     Higher1<F, Integer> visit(ReadInt value);
     Higher1<F, Boolean> visit(ReadBoolean value);
+    <T> Higher1<F, Iterable<T>> visit(ReadIterable<T> value);
     <T> Higher1<F, T> visit(ReadConfig<T> value);
   }
 
@@ -71,6 +75,25 @@ public interface DSL<T> {
 
     @Override
     public <F extends Kind> Higher1<F, Boolean> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
+    }
+  }
+
+  final class ReadIterable<T> extends AbstractRead<Iterable<T>> {
+
+    private final PureCFG<T> item;
+
+    protected ReadIterable(String key, PureCFG<T> item) {
+      super(key);
+      this.item = requireNonNull(item);
+    }
+
+    public PureCFG<T> next() {
+      return item;
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, Iterable<T>> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }

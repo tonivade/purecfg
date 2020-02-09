@@ -14,10 +14,13 @@ import com.github.tonivade.purefun.Higher2;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Instance;
 import com.github.tonivade.purefun.Kind;
+import com.github.tonivade.purefun.data.ImmutableArray;
+import com.github.tonivade.purefun.data.Sequence;
 import com.github.tonivade.purefun.free.FreeAp;
 import com.github.tonivade.purefun.instances.ConstInstances;
 import com.github.tonivade.purefun.instances.IdInstances;
 import com.github.tonivade.purefun.instances.OptionInstances;
+import com.github.tonivade.purefun.instances.SequenceInstances;
 import com.github.tonivade.purefun.instances.ValidationInstances;
 import com.github.tonivade.purefun.type.Const;
 import com.github.tonivade.purefun.type.Id;
@@ -115,6 +118,10 @@ public final class PureCFG<T> {
     return new PureCFG<>(new DSL.ReadBoolean(key));
   }
 
+  public static <T> PureCFG<Iterable<T>> readIterable(String key, PureCFG<T> item) {
+    return new PureCFG<>(new DSL.ReadIterable(key, item));
+  }
+
   public static <T> PureCFG<T> readConfig(String key, PureCFG<T> cfg) {
     return new PureCFG<>(new DSL.ReadConfig<>(key, cfg));
   }
@@ -137,29 +144,64 @@ public final class PureCFG<T> {
     }
   }
 
-  private static final class IdVisitor implements DSL.Visitor<Id.µ> {
+  private static abstract class AbstractVisitor<F extends Kind> implements DSL.Visitor<F> {
 
     private final Key baseKey;
     private final Properties properties;
 
-    private IdVisitor(Key baseKey, Properties properties) {
+    private AbstractVisitor(Key baseKey, Properties properties) {
       this.baseKey = requireNonNull(baseKey);
       this.properties = requireNonNull(properties);
     }
 
+    protected Properties getProperties() {
+      return properties;
+    }
+
+    protected String extend(DSL<?> value) {
+      return baseKey.extend(value);
+    }
+
+    protected String getProperty(DSL<?> value) {
+      return properties.getProperty(extend(value));
+    }
+
+    protected <T> Sequence<Higher1<F, T>> readAll(DSL.ReadIterable<T> value) {
+      String key = extend(value);
+      return ImmutableArray.from(properties.keySet())
+          .map(Object::toString)
+          .filter(k -> k.matches(key.replaceAll("\\.", "\\.") + "\\.\\d"))
+          .map(k -> new DSL.ReadConfig<>(k, value.next()))
+          .map(dsl -> visit(dsl));
+    }
+  }
+
+  private static final class IdVisitor extends AbstractVisitor<Id.µ> {
+
+    private IdVisitor(Key baseKey, Properties properties) {
+      super(baseKey, properties);
+    }
+
     @Override
     public Higher1<Id.µ, String> visit(DSL.ReadString value) {
-      return Id.of(read(baseKey.extend(value)));
+      return Id.of(getProperty(value));
     }
 
     @Override
     public Higher1<Id.µ, Integer> visit(DSL.ReadInt value) {
-      return Id.of(Integer.parseInt(read(baseKey.extend(value))));
+      return Id.of(Integer.parseInt(getProperty(value)));
     }
 
     @Override
     public Higher1<Id.µ, Boolean> visit(DSL.ReadBoolean value) {
-      return Id.of(Boolean.parseBoolean(read(baseKey.extend(value))));
+      return Id.of(Boolean.parseBoolean(getProperty(value)));
+    }
+
+    @Override
+    public <T> Higher1<Id.µ, Iterable<T>> visit(DSL.ReadIterable<T> value) {
+      return SequenceInstances.traverse()
+          .sequence(IdInstances.applicative(), readAll(value))
+          .fix1(Id::narrowK).map(s -> s.fix1(Sequence::narrowK));
     }
 
     @Override
@@ -167,38 +209,37 @@ public final class PureCFG<T> {
       return value.next().foldMap(nestedInterpreter(value), IdInstances.applicative()).fix1(Id::narrowK);
     }
 
-    private String read(String extend) {
-      return properties.getProperty(extend);
-    }
-
     private <A> Interpreter<Id.µ> nestedInterpreter(DSL.ReadConfig<A> value) {
-      return new Interpreter<>(new IdVisitor(Key.with(value.key()), properties));
+      return new Interpreter<>(new IdVisitor(Key.with(value.key()), getProperties()));
     }
   }
 
-  private static final class OptionVisitor implements DSL.Visitor<Option.µ> {
-
-    private final Key baseKey;
-    private final Properties properties;
+  private static final class OptionVisitor extends AbstractVisitor<Option.µ> {
 
     private OptionVisitor(Key baseKey, Properties properties) {
-      this.baseKey = requireNonNull(baseKey);
-      this.properties = requireNonNull(properties);
+      super(baseKey, properties);
     }
 
     @Override
     public Higher1<Option.µ, String> visit(DSL.ReadString value) {
-      return read(baseKey.extend(value));
+      return read(value);
     }
 
     @Override
     public Higher1<Option.µ, Integer> visit(DSL.ReadInt value) {
-      return read(baseKey.extend(value)).map(Integer::parseInt);
+      return read(value).map(Integer::parseInt);
     }
 
     @Override
     public Higher1<Option.µ, Boolean> visit(DSL.ReadBoolean value) {
-      return read(baseKey.extend(value)).map(Boolean::parseBoolean);
+      return read(value).map(Boolean::parseBoolean);
+    }
+
+    @Override
+    public <T> Higher1<Option.µ, Iterable<T>> visit(DSL.ReadIterable<T> value) {
+      return SequenceInstances.traverse()
+          .sequence(OptionInstances.applicative(), readAll(value))
+          .fix1(Option::narrowK).map(s -> s.fix1(Sequence::narrowK));
     }
 
     @Override
@@ -206,38 +247,42 @@ public final class PureCFG<T> {
       return value.next().foldMap(nestedInterpreter(value), OptionInstances.applicative()).fix1(Option::narrowK);
     }
 
-    private Option<String> read(String extend) {
-      return Option.of(properties.getProperty(extend));
+    private Option<String> read(DSL<?> dsl) {
+      return Option.of(getProperty(dsl));
     }
 
     private <A> Interpreter<Option.µ> nestedInterpreter(DSL.ReadConfig<A> value) {
-      return new Interpreter<>(new OptionVisitor(Key.with(value.key()), properties));
+      return new Interpreter<>(new OptionVisitor(Key.with(value.key()), getProperties()));
     }
   }
 
-  private static final class ValidationVisitor implements DSL.Visitor<Higher1<Validation.µ, Validation.Result<String>>> {
-
-    private final Key baseKey;
-    private final Properties properties;
+  private static final class ValidationVisitor
+      extends AbstractVisitor<Higher1<Validation.µ, Validation.Result<String>>> {
 
     private ValidationVisitor(Key baseKey, Properties properties) {
-      this.baseKey = requireNonNull(baseKey);
-      this.properties = requireNonNull(properties);
+      super(baseKey, properties);
     }
 
     @Override
     public Higher2<Validation.µ, Validation.Result<String>, String> visit(DSL.ReadString value) {
-      return read(baseKey.extend(value)).fold(() -> invalid(value), this::valid);
+      return read(value).fold(() -> invalid(value), this::valid);
     }
 
     @Override
     public Higher2<Validation.µ, Validation.Result<String>, Integer> visit(DSL.ReadInt value) {
-      return read(baseKey.extend(value)).map(Integer::parseInt).fold(() -> invalid(value), this::valid);
+      return read(value).map(Integer::parseInt).fold(() -> invalid(value), this::valid);
     }
 
     @Override
     public Higher2<Validation.µ, Validation.Result<String>, Boolean> visit(DSL.ReadBoolean value) {
-      return read(baseKey.extend(value)).map(Boolean::parseBoolean).fold(() -> invalid(value), this::valid);
+      return read(value).map(Boolean::parseBoolean).fold(() -> invalid(value), this::valid);
+    }
+
+    @Override
+    public <T> Higher1<Higher1<Validation.µ, Validation.Result<String>>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
+      return SequenceInstances.traverse()
+          .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
+          .fix1(Validation::narrowK).map(s -> s.fix1(Sequence::narrowK));
     }
 
     @Override
@@ -246,16 +291,16 @@ public final class PureCFG<T> {
           .fix1(Validation::narrowK);
     }
 
-    private Option<String> read(String extend) {
-      return Option.of(properties.getProperty(extend));
+    private Option<String> read(DSL<?> dsl) {
+      return Option.of(getProperty(dsl));
     }
 
     private <A> Interpreter<Higher1<Validation.µ, Validation.Result<String>>> nestedInterpreter(DSL.ReadConfig<A> value) {
-      return new Interpreter<>(new ValidationVisitor(Key.with(value.key()), properties));
+      return new Interpreter<>(new ValidationVisitor(Key.with(value.key()), getProperties()));
     }
 
     private <T> Validation<Validation.Result<String>, T> invalid(DSL<T> value) {
-      return Validation.invalid(Validation.Result.of("key not found: " + baseKey.extend(value)));
+      return Validation.invalid(Validation.Result.of("key not found: " + extend(value)));
     }
 
     private <T> Validation<Validation.Result<String>, T> valid(T value) {
@@ -284,6 +329,11 @@ public final class PureCFG<T> {
     @Override
     public Higher2<Const.µ, String, Boolean> visit(DSL.ReadBoolean value) {
       return typeOf(value, "Boolean");
+    }
+
+    @Override
+    public <T> Higher1<Higher1<Const.µ, String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
+      return null;
     }
 
     @Override
