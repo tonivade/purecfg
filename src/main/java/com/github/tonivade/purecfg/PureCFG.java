@@ -31,6 +31,8 @@ import com.github.tonivade.purefun.typeclasses.FunctionK;
 import com.github.tonivade.purefun.typeclasses.Monoid;
 
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
 
@@ -168,11 +170,24 @@ public final class PureCFG<T> {
 
     protected <T> Sequence<Higher1<F, T>> readAll(DSL.ReadIterable<T> value) {
       String key = extend(value);
-      return ImmutableArray.from(properties.keySet())
+      String regex = "(" + key.replaceAll("\\.", "\\.") + "\\.\\d+)\\..*";
+      ImmutableArray<DSL.ReadConfig<T>> array = ImmutableArray.from(properties.keySet())
           .map(Object::toString)
-          .filter(k -> k.matches(key.replaceAll("\\.", "\\.") + "\\.\\d"))
-          .map(k -> new DSL.ReadConfig<>(k, value.next()))
-          .map(dsl -> visit(dsl));
+          .sort(String::compareTo)
+          .filter(k -> k.matches(regex))
+          .map(k -> getKey(k, regex))
+          .map(k -> new DSL.ReadConfig<>(k, value.next()));
+      return array.map(dsl -> visit(dsl));
+    }
+
+    private String getKey(String key, String regex) {
+      Matcher matcher = Pattern.compile(regex).matcher(key);
+
+      if (matcher.find()) {
+        return matcher.group(1);
+      }
+
+      throw new IllegalStateException();
     }
   }
 

@@ -4,6 +4,8 @@
  */
 package com.github.tonivade.purecfg;
 
+import com.github.tonivade.purefun.data.ImmutableArray;
+import com.github.tonivade.purefun.data.Sequence;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 import org.junit.jupiter.api.Test;
@@ -13,7 +15,10 @@ import java.util.Properties;
 import static com.github.tonivade.purecfg.PureCFG.readBoolean;
 import static com.github.tonivade.purecfg.PureCFG.readConfig;
 import static com.github.tonivade.purecfg.PureCFG.readInt;
+import static com.github.tonivade.purecfg.PureCFG.readIterable;
 import static com.github.tonivade.purecfg.PureCFG.readString;
+import static com.github.tonivade.purefun.data.Sequence.arrayOf;
+import static com.github.tonivade.purefun.data.Sequence.listOf;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,6 +40,20 @@ class PureCFGTest {
         () -> assertConfig(cfg.safeRun(properties).get()),
         () -> assertConfig(cfg.validatedRun(properties).get())
     );
+  }
+
+  @Test
+  void testIterable() {
+    PureCFG<Iterable<String>> iterable = readIterable("list", readString("it"));
+
+    Properties properties = new Properties();
+    properties.put("list.0.it", "a");
+    properties.put("list.1.it", "b");
+    properties.put("list.2.it", "c");
+
+    Option<Iterable<String>> option = iterable.safeRun(properties);
+
+    assertEquals(listOf("a", "b", "c"), option.get());
   }
 
   @Test
