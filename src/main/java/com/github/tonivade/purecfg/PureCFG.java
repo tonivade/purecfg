@@ -172,13 +172,13 @@ public final class PureCFG<T> {
     protected <T> Sequence<Higher1<F, T>> readAll(DSL.ReadIterable<T> value) {
       String key = extend(value);
       String regex = "(" + key.replaceAll("\\.", "\\.") + "\\.\\d+)\\..*";
-      Stream<DSL.ReadConfig<T>> array = properties.keySet().stream()
+      Stream<DSL.ReadConfig<T>> stream = properties.keySet().stream()
           .map(Object::toString)
+          .distinct()
           .sorted()
           .flatMap(k -> getKey(k, regex))
-          .distinct()
           .map(k -> new DSL.ReadConfig<>(k, value.next()));
-      return array.map(dsl -> visit(dsl)).collect(toImmutableArray());
+      return stream.map(dsl -> visit(dsl)).collect(toImmutableArray());
     }
 
     private Stream<String> getKey(String key, String regex) {

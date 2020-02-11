@@ -7,10 +7,7 @@ package com.github.tonivade.purecfg;
 import com.github.tonivade.purefun.Higher1;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;
-import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.data.NonEmptyString;
-import com.github.tonivade.purefun.data.Sequence;
-import com.github.tonivade.purefun.type.Id;
 
 import static java.util.Objects.requireNonNull;
 
