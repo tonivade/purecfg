@@ -295,7 +295,7 @@ public final class PureCFG<T> {
     }
 
     @Override
-    public <T> Higher1<Higher1<Validation.µ, Validation.Result<String>>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
+    public <T> Higher2<Validation.µ, Validation.Result<String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
       return SequenceInstances.traverse()
           .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
           .fix1(Validation::narrowK).map(s -> s.fix1(Sequence::narrowK));
