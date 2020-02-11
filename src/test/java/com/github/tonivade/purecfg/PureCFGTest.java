@@ -5,14 +5,13 @@
 package com.github.tonivade.purecfg;
 
 import com.github.tonivade.purefun.Tuple;
-import com.github.tonivade.purefun.Tuple2;
+import com.github.tonivade.purefun.Tuple3;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
-import static com.github.tonivade.purecfg.PureCFG.map2;
 import static com.github.tonivade.purecfg.PureCFG.map3;
 import static com.github.tonivade.purecfg.PureCFG.readBoolean;
 import static com.github.tonivade.purecfg.PureCFG.readConfig;
@@ -62,10 +61,10 @@ class PureCFGTest {
 
   @Test
   void analizeListOf() {
-    PureCFG<Iterable<Tuple2<String, Integer>>> iterable =
-        readIterable("list", readConfig("it", map2(readString("a"), readInt("b"), Tuple::of)));
+    PureCFG<Iterable<Tuple3<String, Integer, Boolean>>> iterable =
+        readIterable("list", map3(readString("a"), readInt("b"), readBoolean("c"), Tuple::of));
 
-    assertEquals("- list.[].it.a: String\n- list.[].it.b: Integer\n", iterable.describe());
+    assertEquals("- list.[].a: String\n- list.[].b: Integer\n- list.[].c: Boolean\n", iterable.describe());
   }
 
   @Test
