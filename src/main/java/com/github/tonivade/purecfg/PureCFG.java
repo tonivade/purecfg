@@ -14,7 +14,6 @@ import com.github.tonivade.purefun.Higher2;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Instance;
 import com.github.tonivade.purefun.Kind;
-import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.data.Sequence;
 import com.github.tonivade.purefun.free.FreeAp;
 import com.github.tonivade.purefun.instances.ConstInstances;
@@ -33,7 +32,9 @@ import com.github.tonivade.purefun.typeclasses.Monoid;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
+import static com.github.tonivade.purefun.data.ImmutableArray.toImmutableArray;
 import static java.util.Objects.requireNonNull;
 
 @HigherKind
@@ -121,7 +122,7 @@ public final class PureCFG<T> {
   }
 
   public static <T> PureCFG<Iterable<T>> readIterable(String key, PureCFG<T> item) {
-    return new PureCFG<>(new DSL.ReadIterable(key, item));
+    return new PureCFG<>(new DSL.ReadIterable<>(key, item));
   }
 
   public static <T> PureCFG<T> readConfig(String key, PureCFG<T> cfg) {
@@ -171,23 +172,23 @@ public final class PureCFG<T> {
     protected <T> Sequence<Higher1<F, T>> readAll(DSL.ReadIterable<T> value) {
       String key = extend(value);
       String regex = "(" + key.replaceAll("\\.", "\\.") + "\\.\\d+)\\..*";
-      ImmutableArray<DSL.ReadConfig<T>> array = ImmutableArray.from(properties.keySet())
+      Stream<DSL.ReadConfig<T>> array = properties.keySet().stream()
           .map(Object::toString)
-          .sort(String::compareTo)
-          .filter(k -> k.matches(regex))
-          .map(k -> getKey(k, regex))
+          .sorted()
+          .flatMap(k -> getKey(k, regex))
+          .distinct()
           .map(k -> new DSL.ReadConfig<>(k, value.next()));
-      return array.map(dsl -> visit(dsl));
+      return array.map(dsl -> visit(dsl)).collect(toImmutableArray());
     }
 
-    private String getKey(String key, String regex) {
+    private Stream<String> getKey(String key, String regex) {
       Matcher matcher = Pattern.compile(regex).matcher(key);
 
       if (matcher.find()) {
-        return matcher.group(1);
+        return Stream.of(matcher.group(1));
       }
 
-      throw new IllegalStateException();
+      return Stream.empty();
     }
   }
 
@@ -347,8 +348,8 @@ public final class PureCFG<T> {
     }
 
     @Override
-    public <T> Higher1<Higher1<Const.µ, String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return null;
+    public <T> Higher2<Const.µ, String, Iterable<T>> visit(DSL.ReadIterable<T> value) {
+      return visit(new DSL.ReadConfig<>(extend(value) + ".[]", value.next())).fix2(Const::narrowK).<Iterable<T>>retag().kind2();
     }
 
     @Override
@@ -358,11 +359,15 @@ public final class PureCFG<T> {
     }
 
     private <T> Const<String, T> typeOf(DSL.AbstractRead<T> value, String type) {
-      return Const.of("- " + baseKey.extend(value) + ": " + type + "\n");
+      return Const.of("- " + extend(value) + ": " + type + "\n");
     }
 
     private <A> Interpreter<Higher1<Const.µ, String>> nestedInterpreter(DSL.ReadConfig<A> value) {
-      return new Interpreter<>(new ConstVisitor(Key.with(value.key())));
+      return new Interpreter<>(new ConstVisitor(Key.with(extend(value))));
+    }
+
+    private String extend(DSL<?> value) {
+      return baseKey.extend(value);
     }
   }
 

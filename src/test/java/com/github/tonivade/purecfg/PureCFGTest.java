@@ -4,20 +4,21 @@
  */
 package com.github.tonivade.purecfg;
 
-import com.github.tonivade.purefun.data.ImmutableArray;
-import com.github.tonivade.purefun.data.Sequence;
+import com.github.tonivade.purefun.Tuple;
+import com.github.tonivade.purefun.Tuple2;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
+import static com.github.tonivade.purecfg.PureCFG.map2;
+import static com.github.tonivade.purecfg.PureCFG.map3;
 import static com.github.tonivade.purecfg.PureCFG.readBoolean;
 import static com.github.tonivade.purecfg.PureCFG.readConfig;
 import static com.github.tonivade.purecfg.PureCFG.readInt;
 import static com.github.tonivade.purecfg.PureCFG.readIterable;
 import static com.github.tonivade.purecfg.PureCFG.readString;
-import static com.github.tonivade.purefun.data.Sequence.arrayOf;
 import static com.github.tonivade.purefun.data.Sequence.listOf;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PureCFGTest {
 
   @Test
-  void test() {
+  void run() {
     PureCFG<Config> cfg = program();
 
     Properties properties = new Properties();
@@ -43,7 +44,7 @@ class PureCFGTest {
   }
 
   @Test
-  void testIterable() {
+  void iterable() {
     PureCFG<Iterable<String>> iterable = readIterable("list", readString("it"));
 
     Properties properties = new Properties();
@@ -53,11 +54,22 @@ class PureCFGTest {
 
     Option<Iterable<String>> option = iterable.safeRun(properties);
 
-    assertEquals(listOf("a", "b", "c"), option.get());
+    assertAll(
+        () -> assertEquals(listOf("a", "b", "c"), option.get()),
+        () -> assertEquals("- list.[].it: String\n", iterable.describe())
+    );
   }
 
   @Test
-  void testError() {
+  void analizeListOf() {
+    PureCFG<Iterable<Tuple2<String, Integer>>> iterable =
+        readIterable("list", readConfig("it", map2(readString("a"), readInt("b"), Tuple::of)));
+
+    assertEquals("- list.[].it.a: String\n- list.[].it.b: Integer\n", iterable.describe());
+  }
+
+  @Test
+  void error() {
     PureCFG<Config> cfg = program();
 
     Properties properties = new Properties();
@@ -89,7 +101,7 @@ class PureCFGTest {
     PureCFG<Integer> port = readInt("port");
     PureCFG<Boolean> active = readBoolean("active");
 
-    PureCFG<Config> hostAndPort = PureCFG.map3(host, port, active, Config::new);
+    PureCFG<Config> hostAndPort = map3(host, port, active, Config::new);
 
     return readConfig("server", hostAndPort);
   }
