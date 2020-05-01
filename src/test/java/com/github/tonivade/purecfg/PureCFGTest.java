@@ -6,30 +6,38 @@ package com.github.tonivade.purecfg;
 
 import com.github.tonivade.purefun.Tuple;
 import com.github.tonivade.purefun.Tuple3;
+import com.github.tonivade.purefun.data.ImmutableList;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 import com.moandjiezana.toml.Toml;
 import org.junit.jupiter.api.Test;
 
+import java.util.Objects;
 import java.util.Properties;
 
+import static com.github.tonivade.purecfg.PureCFG.map2;
 import static com.github.tonivade.purecfg.PureCFG.map3;
 import static com.github.tonivade.purecfg.PureCFG.readBoolean;
-import static com.github.tonivade.purecfg.PureCFG.readConfig;
 import static com.github.tonivade.purecfg.PureCFG.readInt;
 import static com.github.tonivade.purecfg.PureCFG.readIterable;
 import static com.github.tonivade.purecfg.PureCFG.readString;
+import static com.github.tonivade.purecfg.Source.from;
 import static com.github.tonivade.purefun.data.Sequence.listOf;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PureCFGTest {
 
+  private final ImmutableList<User> expectedUsers = listOf(
+      new User("a", "a"),
+      new User("b", "b"),
+      new User("c", "c"));
+  private final Config expectedConfig = new Config("localhost", 8080, true);
+
   @Test
   void run() {
-    PureCFG<Config> cfg = program();
+    PureCFG<Config> cfg = readConfig();
 
     Properties properties = new Properties();
     properties.put("server.host", "localhost");
@@ -38,22 +46,22 @@ class PureCFGTest {
     Source source = Source.from(properties);
 
     assertAll(
-        () -> assertConfig(cfg.unsafeRun(source)),
-        () -> assertConfig(cfg.safeRun(source).get()),
-        () -> assertConfig(cfg.validatedRun(source).get())
+        () -> assertEquals(expectedConfig, cfg.unsafeRun(source)),
+        () -> assertEquals(expectedConfig, cfg.safeRun(source).get()),
+        () -> assertEquals(expectedConfig, cfg.validatedRun(source).get())
     );
   }
 
   @Test
   void runToml() {
-    PureCFG<Config> cfg = program();
+    PureCFG<Config> cfg = readConfig();
     Toml toml = new Toml().read("[server]\n  host = \"localhost\"\n  port = 8080\n  active = true");
     Source source = Source.from(toml);
 
     assertAll(
-        () -> assertConfig(cfg.unsafeRun(source)),
-        () -> assertConfig(cfg.safeRun(source).get()),
-        () -> assertConfig(cfg.validatedRun(source).get())
+        () -> assertEquals(expectedConfig, cfg.unsafeRun(source)),
+        () -> assertEquals(expectedConfig, cfg.safeRun(source).get()),
+        () -> assertEquals(expectedConfig, cfg.validatedRun(source).get())
     );
   }
 
@@ -89,6 +97,33 @@ class PureCFGTest {
   }
 
   @Test
+  void iterableOf() {
+    Properties properties = new Properties();
+    properties.put("user.0.name", "a");
+    properties.put("user.0.pass", "a");
+    properties.put("user.1.name", "b");
+    properties.put("user.1.pass", "b");
+    properties.put("user.2.name", "c");
+    properties.put("user.2.pass", "c");
+
+    Option<Iterable<User>> option = readUsers().safeRun(from(properties));
+
+    assertEquals(Option.some(expectedUsers), option);
+  }
+
+  @Test
+  void iterableOfToml() {
+    String source =
+        "[[user]]\n  name = \"a\"\npass = \"a\"\n" +
+        "[[user]]\n  name = \"b\"\npass = \"b\"\n" +
+        "[[user]]\n  name = \"c\"\npass = \"c\"\n";
+
+    Option<Iterable<User>> option = readUsers().safeRun(from(new Toml().read(source)));
+
+    assertEquals(Option.some(expectedUsers), option);
+  }
+
+  @Test
   void analyzeListOf() {
     PureCFG<Iterable<Tuple3<String, Integer, Boolean>>> iterable =
         readIterable("list", map3(readString("a"), readInt("b"), readBoolean("c"), Tuple::of));
@@ -98,7 +133,7 @@ class PureCFGTest {
 
   @Test
   void errorToml() {
-    PureCFG<Config> cfg = program();
+    PureCFG<Config> cfg = readConfig();
 
     Toml toml = new Toml();
     Source source = Source.from(toml);
@@ -118,7 +153,7 @@ class PureCFGTest {
 
   @Test
   void error() {
-    PureCFG<Config> cfg = program();
+    PureCFG<Config> cfg = readConfig();
 
     Properties properties = new Properties();
     Source source = Source.from(properties);
@@ -138,35 +173,34 @@ class PureCFGTest {
 
   @Test
   void analyze() {
-    PureCFG<Config> program = program();
+    PureCFG<Config> program = readConfig();
 
     String result = program.describe();
 
     assertEquals("- server.host: String\n- server.port: Integer\n- server.active: Boolean\n", result);
   }
 
-  private PureCFG<Config> program() {
+  private PureCFG<Config> readConfig() {
     PureCFG<String> host = readString("host");
     PureCFG<Integer> port = readInt("port");
     PureCFG<Boolean> active = readBoolean("active");
 
     PureCFG<Config> hostAndPort = map3(host, port, active, Config::new);
 
-    return readConfig("server", hostAndPort);
+    return PureCFG.readConfig("server", hostAndPort);
   }
 
-  private void assertConfig(Config config) {
-    assertEquals("localhost", config.getHost());
-    assertEquals(8080, config.getPort());
-    assertTrue(config.isActive());
+  private PureCFG<Iterable<User>> readUsers() {
+    PureCFG<User> userProgram = map2(readString("name"), readString("pass"), User::new);
+    return readIterable("user", userProgram);
   }
 }
 
 final class Config {
 
-  private final String host;
-  private final int port;
-  private final boolean active;
+  final String host;
+  final int port;
+  final boolean active;
 
   Config(String host, int port, boolean active) {
     this.host = host;
@@ -174,16 +208,19 @@ final class Config {
     this.active = active;
   }
 
-  public String getHost() {
-    return host;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Config config = (Config) o;
+    return port == config.port &&
+        active == config.active &&
+        Objects.equals(host, config.host);
   }
 
-  public int getPort() {
-    return port;
-  }
-
-  public boolean isActive() {
-    return active;
+  @Override
+  public int hashCode() {
+    return Objects.hash(host, port, active);
   }
 
   @Override
@@ -192,6 +229,38 @@ final class Config {
         "host='" + host + '\'' +
         ", port=" + port +
         ", active=" + active +
+        '}';
+  }
+}
+
+final class User {
+
+  final String name;
+  final String pass;
+
+  User(String name, String pass) {
+    this.name = name;
+    this.pass = pass;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    User user = (User) o;
+    return Objects.equals(name, user.name) && Objects.equals(pass, user.pass);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, pass);
+  }
+
+  @Override
+  public String toString() {
+    return "User{" +
+        "name='" + name + '\'' +
+        ", pass='" + pass + '\'' +
         '}';
   }
 }

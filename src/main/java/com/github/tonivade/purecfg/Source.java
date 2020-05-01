@@ -4,6 +4,7 @@
  */
 package com.github.tonivade.purecfg;
 
+import com.github.tonivade.purefun.Tuple2;
 import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Try;
@@ -92,9 +93,9 @@ public interface Source {
       String regex = "(" + key.replaceAll("\\.", "\\.") + "\\.\\d+).*";
       return properties.keySet().stream()
           .map(Object::toString)
+          .flatMap(k -> getKey(k, regex))
           .distinct()
-          .sorted()
-          .flatMap(k -> getKey(k, regex));
+          .sorted();
     }
 
     @SuppressWarnings("unchecked")
@@ -163,7 +164,9 @@ public interface Source {
 
     @Override
     public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
-      throw new UnsupportedOperationException();
+      List<Toml> list = toml.getTables(key);
+      Stream<Integer> integerStream = ImmutableArray.from(list).zipWithIndex().map(Tuple2::get1);
+      return integerStream.map(i -> new DSL.ReadConfig<>(key + "[" + i + "]", next)).collect(toImmutableArray());
     }
   }
 }
