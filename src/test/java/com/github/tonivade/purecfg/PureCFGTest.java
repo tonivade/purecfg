@@ -34,11 +34,12 @@ class PureCFGTest {
     properties.put("server.host", "localhost");
     properties.put("server.port", "8080");
     properties.put("server.active", "true");
+    Source source = Source.fromProperties(properties);
 
     assertAll(
-        () -> assertConfig(cfg.unsafeRun(properties)),
-        () -> assertConfig(cfg.safeRun(properties).get()),
-        () -> assertConfig(cfg.validatedRun(properties).get())
+        () -> assertConfig(cfg.unsafeRun(source)),
+        () -> assertConfig(cfg.safeRun(source).get()),
+        () -> assertConfig(cfg.validatedRun(source).get())
     );
   }
 
@@ -51,7 +52,7 @@ class PureCFGTest {
     properties.put("list.1.it", "b");
     properties.put("list.2.it", "c");
 
-    Option<Iterable<String>> option = iterable.safeRun(properties);
+    Option<Iterable<String>> option = iterable.safeRun(Source.fromProperties(properties));
 
     assertAll(
         () -> assertEquals(listOf("a", "b", "c"), option.get()),
@@ -60,7 +61,7 @@ class PureCFGTest {
   }
 
   @Test
-  void analizeListOf() {
+  void analyzeListOf() {
     PureCFG<Iterable<Tuple3<String, Integer, Boolean>>> iterable =
         readIterable("list", map3(readString("a"), readInt("b"), readBoolean("c"), Tuple::of));
 
@@ -72,17 +73,18 @@ class PureCFGTest {
     PureCFG<Config> cfg = program();
 
     Properties properties = new Properties();
+    Source source = Source.fromProperties(properties);
 
     assertAll(
-        () -> assertThrows(NullPointerException.class, () -> cfg.unsafeRun(properties)),
-        () -> assertEquals(Option.none(), cfg.safeRun(properties)),
+        () -> assertThrows(NullPointerException.class, () -> cfg.unsafeRun(source)),
+        () -> assertEquals(Option.none(), cfg.safeRun(source)),
         () -> assertEquals(
             Validation.invalid(
                 Validation.Result.of(
                     "key not found: server.active",
                     "key not found: server.port",
                     "key not found: server.host")),
-            cfg.validatedRun(properties))
+            cfg.validatedRun(source))
     );
   }
 
