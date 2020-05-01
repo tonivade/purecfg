@@ -26,6 +26,7 @@ public interface Source {
   Option<Integer> getInteger(String key);
   Option<Boolean> getBoolean(String key);
 
+  <T> Iterable<DSL<T>> getIterable(String key, Class<T> type);
   <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next);
 
   static Source fromProperties(String file) {
@@ -78,15 +79,35 @@ public interface Source {
     }
 
     @Override
+    public <T> Iterable<DSL<T>> getIterable(String key, Class<T> type) {
+      return iterableKeys(key).map(k -> readKey(k, type)).collect(toImmutableArray());
+    }
+
+    @Override
     public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
-      String regex = "(" + key.replaceAll("\\.", "\\.") + "\\.\\d+)\\..*";
-      Stream<DSL<T>> stream = properties.keySet().stream()
+      return iterableKeys(key).map(k -> new DSL.ReadConfig<>(k, next)).collect(toImmutableArray());
+    }
+
+    private Stream<String> iterableKeys(String key) {
+      String regex = "(" + key.replaceAll("\\.", "\\.") + "\\.\\d+).*";
+      return properties.keySet().stream()
           .map(Object::toString)
           .distinct()
           .sorted()
-          .flatMap(k -> getKey(k, regex))
-          .map(k -> new DSL.ReadConfig<>(k, next));
-      return stream.collect(toImmutableArray());
+          .flatMap(k -> getKey(k, regex));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> DSL<T> readKey(String key, Class<T> type) {
+      switch (type.getSimpleName()) {
+        case "String":
+          return (DSL<T>) new DSL.ReadString(key);
+        case "Integer":
+          return (DSL<T>) new DSL.ReadInt(key);
+        case "Boolean":
+          return (DSL<T>) new DSL.ReadBoolean(key);
+      }
+      throw new UnsupportedOperationException("this class is not supported: " + type.getName());
     }
 
     private Option<String> readString(String key) {
@@ -132,13 +153,17 @@ public interface Source {
     }
 
     @Override
-    public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
-      // TODO:
+    public <T> Iterable<DSL<T>> getIterable(String key, Class<T> type) {
       List<Object> list = toml.getList(key);
       if (list.get(0) instanceof Toml) {
         return ImmutableArray.empty();
       }
       return list.stream().map(it -> new DSL.Pure<>(key, (T) it)).collect(toImmutableArray());
+    }
+
+    @Override
+    public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
+      throw new UnsupportedOperationException();
     }
   }
 }

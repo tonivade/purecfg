@@ -116,7 +116,7 @@ public final class PureCFG<T> {
   }
 
   public static <T> PureCFG<Iterable<T>> readIterable(String key, Class<T> type) {
-    return readIterable(key, new PureCFG<>(new DSL.None<>(type)));
+    return new PureCFG<>(new DSL.ReadPrimitiveIterable<>(key, type));
   }
 
   public static <T> PureCFG<Iterable<T>> readIterable(String key, PureCFG<T> item) {
@@ -175,6 +175,11 @@ public final class PureCFG<T> {
       return source.getBoolean(extend(value));
     }
 
+    protected <T> Sequence<Higher1<F, T>> readAll(DSL.ReadPrimitiveIterable<T> value) {
+      Iterable<DSL<T>> properties = source.getIterable(extend(value), value.type());
+      return ImmutableArray.from(properties).map(dsl -> dsl.accept(this));
+    }
+
     protected <T> Sequence<Higher1<F, T>> readAll(DSL.ReadIterable<T> value) {
       Iterable<DSL<T>> properties = source.getIterable(extend(value), value.next());
       return ImmutableArray.from(properties).map(dsl -> dsl.accept(this));
@@ -185,11 +190,6 @@ public final class PureCFG<T> {
 
     private IdVisitor(Key baseKey, Source source) {
       super(baseKey, source);
-    }
-
-    @Override
-    public <T> Higher1<Id.µ, T> visit(DSL.None<T> value) {
-      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -220,6 +220,13 @@ public final class PureCFG<T> {
     }
 
     @Override
+    public <T> Id<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
+      return SequenceInstances.traverse()
+          .sequence(IdInstances.applicative(), readAll(value))
+          .fix1(Id::narrowK).map(s -> s.fix1(Sequence::narrowK));
+    }
+
+    @Override
     public <A> Id<A> visit(DSL.ReadConfig<A> value) {
       return value.next().foldMap(nestedInterpreter(value), IdInstances.applicative()).fix1(Id::narrowK);
     }
@@ -233,11 +240,6 @@ public final class PureCFG<T> {
 
     private OptionVisitor(Key baseKey, Source source) {
       super(baseKey, source);
-    }
-
-    @Override
-    public <T> Option<T> visit(DSL.None<T> value) {
-      return Option.none();
     }
 
     @Override
@@ -268,6 +270,13 @@ public final class PureCFG<T> {
     }
 
     @Override
+    public <T> Option<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
+      return SequenceInstances.traverse()
+          .sequence(OptionInstances.applicative(), readAll(value))
+          .fix1(Option::narrowK).map(s -> s.fix1(Sequence::narrowK));
+    }
+
+    @Override
     public <A> Option<A> visit(DSL.ReadConfig<A> value) {
       return value.next().foldMap(nestedInterpreter(value), OptionInstances.applicative()).fix1(Option::narrowK);
     }
@@ -282,11 +291,6 @@ public final class PureCFG<T> {
 
     private ValidationVisitor(Key baseKey, Source source) {
       super(baseKey, source);
-    }
-
-    @Override
-    public <T> Validation<Validation.Result<String>, T> visit(DSL.None<T> value) {
-      return Validation.invalid(Validation.Result.of("none"));
     }
 
     @Override
@@ -311,6 +315,13 @@ public final class PureCFG<T> {
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
+      return SequenceInstances.traverse()
+          .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
+          .fix1(Validation::narrowK).map(s -> s.fix1(Sequence::narrowK));
+    }
+
+    @Override
+    public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       return SequenceInstances.traverse()
           .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
           .fix1(Validation::narrowK).map(s -> s.fix1(Sequence::narrowK));
@@ -344,11 +355,6 @@ public final class PureCFG<T> {
     }
 
     @Override
-    public <T> Const<String, T> visit(DSL.None<T> value) {
-      return typeOf(value, value.type().getSimpleName());
-    }
-
-    @Override
     public <T> Const<String, T> visit(DSL.Pure<T> value) {
       return typeOf(value, String.valueOf(value.get()));
     }
@@ -371,6 +377,11 @@ public final class PureCFG<T> {
     @Override
     public <T> Const<String, Iterable<T>> visit(DSL.ReadIterable<T> value) {
       return visit(new DSL.ReadConfig<>(extend(value) + ".[]", value.next())).fix2(Const::narrowK).retag();
+    }
+
+    @Override
+    public <T> Higher1<Higher1<Const.µ, String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
+      return typeOf(value, value.type().getSimpleName() + "[]");
     }
 
     @Override

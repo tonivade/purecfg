@@ -9,7 +9,6 @@ import com.github.tonivade.purefun.Tuple3;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 import com.moandjiezana.toml.Toml;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -59,7 +58,6 @@ class PureCFGTest {
   }
 
   @Test
-  @Disabled
   void iterable() {
     PureCFG<Iterable<String>> iterable = readIterable("list", String.class);
 
@@ -72,12 +70,11 @@ class PureCFGTest {
 
     assertAll(
         () -> assertEquals(listOf("a", "b", "c"), option.get()),
-        () -> assertEquals("- list.[]: String\n", iterable.describe())
+        () -> assertEquals("- list: String[]\n", iterable.describe())
     );
   }
 
   @Test
-  @Disabled
   void iterableToml() {
     PureCFG<Iterable<String>> iterable = readIterable("list", String.class);
 
@@ -87,7 +84,7 @@ class PureCFGTest {
 
     assertAll(
         () -> assertEquals(listOf("a", "b", "c"), option.get()),
-        () -> assertEquals("- list.[]: String\n", iterable.describe())
+        () -> assertEquals("- list: String[]\n", iterable.describe())
     );
   }
 

@@ -19,11 +19,11 @@ public interface DSL<T> {
   <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor);
 
   interface Visitor<F extends Kind> {
-    <T> Higher1<F, T> visit(None<T> value);
     <T> Higher1<F, T> visit(Pure<T> value);
     Higher1<F, String> visit(ReadString value);
     Higher1<F, Integer> visit(ReadInt value);
     Higher1<F, Boolean> visit(ReadBoolean value);
+    <T> Higher1<F, Iterable<T>> visit(ReadPrimitiveIterable<T> value);
     <T> Higher1<F, Iterable<T>> visit(ReadIterable<T> value);
     <T> Higher1<F, T> visit(ReadConfig<T> value);
   }
@@ -39,29 +39,6 @@ public interface DSL<T> {
     @Override
     public String key() {
       return key.get();
-    }
-  }
-
-  final class None<T> implements DSL<T> {
-
-    private Class<T> type;
-
-    protected None(Class<T> type) {
-      this.type = requireNonNull(type);
-    }
-
-    @Override
-    public String key() {
-      return "it";
-    }
-
-    public Class<T> type() {
-      return type;
-    }
-
-    @Override
-    public <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor) {
-      return visitor.visit(this);
     }
   }
 
@@ -116,6 +93,25 @@ public interface DSL<T> {
 
     @Override
     public <F extends Kind> Higher1<F, Boolean> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
+    }
+  }
+
+  final class ReadPrimitiveIterable<T> extends AbstractRead<Iterable<T>> {
+
+    private final Class<T> type;
+
+    public ReadPrimitiveIterable(String key, Class<T> type) {
+      super(key);
+      this.type = type;
+    }
+
+    public Class<T> type() {
+      return type;
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, Iterable<T>> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
