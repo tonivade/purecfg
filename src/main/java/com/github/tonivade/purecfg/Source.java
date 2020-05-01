@@ -4,9 +4,13 @@
  */
 package com.github.tonivade.purecfg;
 
+import com.github.tonivade.purefun.data.ImmutableArray;
+import com.github.tonivade.purefun.type.Option;
+import com.github.tonivade.purefun.type.Try;
 import com.moandjiezana.toml.Toml;
 
-import java.util.List;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,15 +21,26 @@ import static java.util.Objects.requireNonNull;
 
 public interface Source {
 
-  String getProperty(String key);
+  Option<String> getString(String key);
+  Option<Integer> getInteger(String key);
+  Option<Long> getLong(String key);
+  Option<Boolean> getBoolean(String key);
 
-  <T> Iterable<DSL.ReadConfig<T>> getProperties(String key, DSL.ReadIterable<T> value);
+  <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next);
 
-  static Source fromProperties(Properties properties) {
+  static Source fromProperties(String file) {
+    return from(PropertiesSource.read(file));
+  }
+
+  static Source fromToml(String file) {
+    return from(TomlSource.read(file));
+  }
+
+  static Source from(Properties properties) {
     return new PropertiesSource(properties);
   }
 
-  static Source fromToml(Toml toml) {
+  static Source from(Toml toml) {
     return new TomlSource(toml);
   }
 
@@ -37,21 +52,50 @@ public interface Source {
       this.properties = requireNonNull(properties);
     }
 
-    @Override
-    public String getProperty(String key) {
-      return properties.getProperty(key);
+    public static Properties read(String file) {
+      try {
+        Properties properties = new Properties();
+        properties.load(requireNonNull(PropertiesSource.class.getClassLoader().getResourceAsStream(file)));
+        return properties;
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
     }
 
     @Override
-    public <T> Iterable<DSL.ReadConfig<T>> getProperties(String key, DSL.ReadIterable<T> value) {
+    public Option<String> getString(String key) {
+      return readString(key);
+    }
+
+    @Override
+    public Option<Integer> getInteger(String key) {
+      return readString(key).map(Integer::parseInt);
+    }
+
+    @Override
+    public Option<Long> getLong(String key) {
+      return readString(key).map(Long::parseLong);
+    }
+
+    @Override
+    public Option<Boolean> getBoolean(String key) {
+      return readString(key).map(Boolean::parseBoolean);
+    }
+
+    @Override
+    public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
       String regex = "(" + key.replaceAll("\\.", "\\.") + "\\.\\d+)\\..*";
-      Stream<DSL.ReadConfig<T>> stream = properties.keySet().stream()
+      Stream<DSL<T>> stream = properties.keySet().stream()
           .map(Object::toString)
           .distinct()
           .sorted()
           .flatMap(k -> getKey(k, regex))
-          .map(k -> new DSL.ReadConfig<>(k, value.next()));
+          .map(k -> new DSL.ReadConfig<>(k, next));
       return stream.collect(toImmutableArray());
+    }
+
+    private Option<String> readString(String key) {
+      return Option.of(properties.getProperty(key));
     }
 
     private Stream<String> getKey(String key, String regex) {
@@ -73,15 +117,34 @@ public interface Source {
       this.toml = requireNonNull(toml);
     }
 
-    @Override
-    public String getProperty(String key) {
-      return toml.getString(key);
+    public static Toml read(String file) {
+      return new Toml().read(requireNonNull(TomlSource.class.getClassLoader().getResourceAsStream(file)));
     }
 
     @Override
-    public <T> Iterable<DSL.ReadConfig<T>> getProperties(String key, DSL.ReadIterable<T> value) {
-      List<Object> list = toml.getList(key);
-      return null;
+    public Option<String> getString(String key) {
+      return Try.of(() -> toml.getString(key)).toOption();
+    }
+
+    @Override
+    public Option<Integer> getInteger(String key) {
+      return Try.of(() -> toml.getLong(key).intValue()).toOption();
+    }
+
+    @Override
+    public Option<Long> getLong(String key) {
+      return Try.of(() -> toml.getLong(key)).toOption();
+    }
+
+    @Override
+    public Option<Boolean> getBoolean(String key) {
+      return Try.of(() -> toml.getBoolean(key)).toOption();
+    }
+
+    @Override
+    public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
+      // TODO:
+      return ImmutableArray.empty();
     }
   }
 }

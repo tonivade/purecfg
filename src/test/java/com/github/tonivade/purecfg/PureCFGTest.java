@@ -8,6 +8,8 @@ import com.github.tonivade.purefun.Tuple;
 import com.github.tonivade.purefun.Tuple3;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
+import com.moandjiezana.toml.Toml;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
@@ -34,7 +36,20 @@ class PureCFGTest {
     properties.put("server.host", "localhost");
     properties.put("server.port", "8080");
     properties.put("server.active", "true");
-    Source source = Source.fromProperties(properties);
+    Source source = Source.from(properties);
+
+    assertAll(
+        () -> assertConfig(cfg.unsafeRun(source)),
+        () -> assertConfig(cfg.safeRun(source).get()),
+        () -> assertConfig(cfg.validatedRun(source).get())
+    );
+  }
+
+  @Test
+  void runToml() {
+    PureCFG<Config> cfg = program();
+    Toml toml = new Toml().read("[server]\n  host = \"localhost\"\n  port = 8080\n  active = true");
+    Source source = Source.from(toml);
 
     assertAll(
         () -> assertConfig(cfg.unsafeRun(source)),
@@ -52,7 +67,22 @@ class PureCFGTest {
     properties.put("list.1.it", "b");
     properties.put("list.2.it", "c");
 
-    Option<Iterable<String>> option = iterable.safeRun(Source.fromProperties(properties));
+    Option<Iterable<String>> option = iterable.safeRun(Source.from(properties));
+
+    assertAll(
+        () -> assertEquals(listOf("a", "b", "c"), option.get()),
+        () -> assertEquals("- list.[].it: String\n", iterable.describe())
+    );
+  }
+
+  @Test
+  @Disabled
+  void iterableToml() {
+    PureCFG<Iterable<String>> iterable = readIterable("list", readString("it"));
+
+    Toml toml = new Toml().read("list = [ \"a\", \"b\", \"c\" ]");
+
+    Option<Iterable<String>> option = iterable.safeRun(Source.from(toml));
 
     assertAll(
         () -> assertEquals(listOf("a", "b", "c"), option.get()),
@@ -69,11 +99,31 @@ class PureCFGTest {
   }
 
   @Test
+  void errorToml() {
+    PureCFG<Config> cfg = program();
+
+    Toml toml = new Toml();
+    Source source = Source.from(toml);
+
+    assertAll(
+        () -> assertThrows(NullPointerException.class, () -> cfg.unsafeRun(source)),
+        () -> assertEquals(Option.none(), cfg.safeRun(source)),
+        () -> assertEquals(
+            Validation.invalid(
+                Validation.Result.of(
+                    "key not found: server.active",
+                    "key not found: server.port",
+                    "key not found: server.host")),
+            cfg.validatedRun(source))
+    );
+  }
+
+  @Test
   void error() {
     PureCFG<Config> cfg = program();
 
     Properties properties = new Properties();
-    Source source = Source.fromProperties(properties);
+    Source source = Source.from(properties);
 
     assertAll(
         () -> assertThrows(NullPointerException.class, () -> cfg.unsafeRun(source)),

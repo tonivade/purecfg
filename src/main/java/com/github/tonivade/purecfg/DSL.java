@@ -19,11 +19,35 @@ public interface DSL<T> {
   <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor);
 
   interface Visitor<F extends Kind> {
+    <T> Higher1<F, T> visit(Pure<T> value);
     Higher1<F, String> visit(ReadString value);
     Higher1<F, Integer> visit(ReadInt value);
     Higher1<F, Boolean> visit(ReadBoolean value);
     <T> Higher1<F, Iterable<T>> visit(ReadIterable<T> value);
     <T> Higher1<F, T> visit(ReadConfig<T> value);
+  }
+
+  final class Pure<T> implements DSL<T> {
+
+    private final T value;
+
+    protected Pure(T value) {
+      this.value = requireNonNull(value);
+    }
+
+    @Override
+    public String key() {
+      throw new UnsupportedOperationException();
+    }
+
+    public T get() {
+      return value;
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
+    }
   }
 
   abstract class AbstractRead<T> implements DSL<T> {
