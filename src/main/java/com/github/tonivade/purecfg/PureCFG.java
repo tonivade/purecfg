@@ -100,7 +100,7 @@ public final class PureCFG<T> {
   }
 
   public static <T> PureCFG<T> pure(T value) {
-    return new PureCFG<>(new DSL.Pure<>(value));
+    return new PureCFG<>(FreeAp.pure(value));
   }
 
   public static PureCFG<Integer> readInt(String key) {
@@ -113,6 +113,10 @@ public final class PureCFG<T> {
 
   public static PureCFG<Boolean> readBoolean(String key) {
     return new PureCFG<>(new DSL.ReadBoolean(key));
+  }
+
+  public static <T> PureCFG<Iterable<T>> readIterable(String key, Class<T> type) {
+    return readIterable(key, new PureCFG<>(new DSL.None<>(type)));
   }
 
   public static <T> PureCFG<Iterable<T>> readIterable(String key, PureCFG<T> item) {
@@ -184,6 +188,11 @@ public final class PureCFG<T> {
     }
 
     @Override
+    public <T> Higher1<Id.µ, T> visit(DSL.None<T> value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public <T> Id<T> visit(DSL.Pure<T> value) {
       return Id.of(value.get());
     }
@@ -224,6 +233,11 @@ public final class PureCFG<T> {
 
     private OptionVisitor(Key baseKey, Source source) {
       super(baseKey, source);
+    }
+
+    @Override
+    public <T> Option<T> visit(DSL.None<T> value) {
+      return Option.none();
     }
 
     @Override
@@ -268,6 +282,11 @@ public final class PureCFG<T> {
 
     private ValidationVisitor(Key baseKey, Source source) {
       super(baseKey, source);
+    }
+
+    @Override
+    public <T> Validation<Validation.Result<String>, T> visit(DSL.None<T> value) {
+      return Validation.invalid(Validation.Result.of("none"));
     }
 
     @Override
@@ -325,8 +344,13 @@ public final class PureCFG<T> {
     }
 
     @Override
+    public <T> Const<String, T> visit(DSL.None<T> value) {
+      return typeOf(value, value.type().getSimpleName());
+    }
+
+    @Override
     public <T> Const<String, T> visit(DSL.Pure<T> value) {
-      return Const.of("constant: " + value.get());
+      return typeOf(value, String.valueOf(value.get()));
     }
 
     @Override
@@ -355,7 +379,7 @@ public final class PureCFG<T> {
           nestedInterpreter(value), ConstInstances.applicative(Monoid.string())).fix1(Const::narrowK);
     }
 
-    private <T> Const<String, T> typeOf(DSL.AbstractRead<T> value, String type) {
+    private <T> Const<String, T> typeOf(DSL<T> value, String type) {
       return Const.of("- " + extend(value) + ": " + type + "\n");
     }
 

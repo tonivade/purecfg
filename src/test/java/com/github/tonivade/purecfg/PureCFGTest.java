@@ -59,26 +59,27 @@ class PureCFGTest {
   }
 
   @Test
+  @Disabled
   void iterable() {
-    PureCFG<Iterable<String>> iterable = readIterable("list", readString("it"));
+    PureCFG<Iterable<String>> iterable = readIterable("list", String.class);
 
     Properties properties = new Properties();
-    properties.put("list.0.it", "a");
-    properties.put("list.1.it", "b");
-    properties.put("list.2.it", "c");
+    properties.put("list.0", "a");
+    properties.put("list.1", "b");
+    properties.put("list.2", "c");
 
     Option<Iterable<String>> option = iterable.safeRun(Source.from(properties));
 
     assertAll(
         () -> assertEquals(listOf("a", "b", "c"), option.get()),
-        () -> assertEquals("- list.[].it: String\n", iterable.describe())
+        () -> assertEquals("- list.[]: String\n", iterable.describe())
     );
   }
 
   @Test
   @Disabled
   void iterableToml() {
-    PureCFG<Iterable<String>> iterable = readIterable("list", readString("it"));
+    PureCFG<Iterable<String>> iterable = readIterable("list", String.class);
 
     Toml toml = new Toml().read("list = [ \"a\", \"b\", \"c\" ]");
 
@@ -86,7 +87,7 @@ class PureCFGTest {
 
     assertAll(
         () -> assertEquals(listOf("a", "b", "c"), option.get()),
-        () -> assertEquals("- list.[].it: String\n", iterable.describe())
+        () -> assertEquals("- list.[]: String\n", iterable.describe())
     );
   }
 

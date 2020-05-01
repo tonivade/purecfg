@@ -11,6 +11,7 @@ import com.moandjiezana.toml.Toml;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,7 +24,6 @@ public interface Source {
 
   Option<String> getString(String key);
   Option<Integer> getInteger(String key);
-  Option<Long> getLong(String key);
   Option<Boolean> getBoolean(String key);
 
   <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next);
@@ -70,11 +70,6 @@ public interface Source {
     @Override
     public Option<Integer> getInteger(String key) {
       return readString(key).map(Integer::parseInt);
-    }
-
-    @Override
-    public Option<Long> getLong(String key) {
-      return readString(key).map(Long::parseLong);
     }
 
     @Override
@@ -132,11 +127,6 @@ public interface Source {
     }
 
     @Override
-    public Option<Long> getLong(String key) {
-      return Try.of(() -> toml.getLong(key)).toOption();
-    }
-
-    @Override
     public Option<Boolean> getBoolean(String key) {
       return Try.of(() -> toml.getBoolean(key)).toOption();
     }
@@ -144,7 +134,11 @@ public interface Source {
     @Override
     public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
       // TODO:
-      return ImmutableArray.empty();
+      List<Object> list = toml.getList(key);
+      if (list.get(0) instanceof Toml) {
+        return ImmutableArray.empty();
+      }
+      return list.stream().map(it -> new DSL.Pure<>(key, (T) it)).collect(toImmutableArray());
     }
   }
 }

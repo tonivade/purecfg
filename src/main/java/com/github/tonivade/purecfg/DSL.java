@@ -19,35 +19,13 @@ public interface DSL<T> {
   <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor);
 
   interface Visitor<F extends Kind> {
+    <T> Higher1<F, T> visit(None<T> value);
     <T> Higher1<F, T> visit(Pure<T> value);
     Higher1<F, String> visit(ReadString value);
     Higher1<F, Integer> visit(ReadInt value);
     Higher1<F, Boolean> visit(ReadBoolean value);
     <T> Higher1<F, Iterable<T>> visit(ReadIterable<T> value);
     <T> Higher1<F, T> visit(ReadConfig<T> value);
-  }
-
-  final class Pure<T> implements DSL<T> {
-
-    private final T value;
-
-    protected Pure(T value) {
-      this.value = requireNonNull(value);
-    }
-
-    @Override
-    public String key() {
-      throw new UnsupportedOperationException();
-    }
-
-    public T get() {
-      return value;
-    }
-
-    @Override
-    public <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor) {
-      return visitor.visit(this);
-    }
   }
 
   abstract class AbstractRead<T> implements DSL<T> {
@@ -61,6 +39,48 @@ public interface DSL<T> {
     @Override
     public String key() {
       return key.get();
+    }
+  }
+
+  final class None<T> implements DSL<T> {
+
+    private Class<T> type;
+
+    protected None(Class<T> type) {
+      this.type = requireNonNull(type);
+    }
+
+    @Override
+    public String key() {
+      return "it";
+    }
+
+    public Class<T> type() {
+      return type;
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
+    }
+  }
+
+  final class Pure<T> extends AbstractRead<T> {
+
+    private final T value;
+
+    protected Pure(String key, T value) {
+      super(key);
+      this.value = requireNonNull(value);
+    }
+
+    public T get() {
+      return value;
+    }
+
+    @Override
+    public <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor) {
+      return visitor.visit(this);
     }
   }
 
@@ -102,15 +122,15 @@ public interface DSL<T> {
 
   final class ReadIterable<T> extends AbstractRead<Iterable<T>> {
 
-    private final PureCFG<T> item;
+    private final PureCFG<T> next;
 
-    protected ReadIterable(String key, PureCFG<T> item) {
+    protected ReadIterable(String key, PureCFG<T> next) {
       super(key);
-      this.item = requireNonNull(item);
+      this.next = requireNonNull(next);
     }
 
     public PureCFG<T> next() {
-      return item;
+      return next;
     }
 
     @Override
@@ -121,15 +141,15 @@ public interface DSL<T> {
 
   final class ReadConfig<T> extends AbstractRead<T> {
 
-    private final PureCFG<T> config;
+    private final PureCFG<T> next;
 
-    protected ReadConfig(String key, PureCFG<T> config) {
+    protected ReadConfig(String key, PureCFG<T> next) {
       super(key);
-      this.config = requireNonNull(config);
+      this.next = requireNonNull(next);
     }
 
     public PureCFG<T> next() {
-      return config;
+      return next;
     }
 
     @Override
