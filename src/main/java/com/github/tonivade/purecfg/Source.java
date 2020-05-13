@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.github.tonivade.purefun.data.ImmutableArray.toImmutableArray;
+import static java.lang.Boolean.TRUE;
 import static java.util.Objects.requireNonNull;
 
 public interface Source {
@@ -30,12 +31,105 @@ public interface Source {
   <T> Iterable<DSL<T>> getIterable(String key, Class<T> type);
   <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next);
 
+  /**
+   * <p>Reads configuration from properties files:</p>
+   *
+   * <pre>
+   *   server.host=localhost
+   *   server.port=8080
+   *   server.active=true
+   * </pre>
+   *
+   * <p>Also it supports lists</p>
+   *
+   * <pre>
+   *   list.0=a
+   *   list.1=b
+   *   list.2=c
+   * </pre>
+   *
+   * <p>An also lists of complex elements:<p/>
+   *
+   * <pre>
+   *   list.0.id=1
+   *   list.0.name=a
+   *   list.1.id=2
+   *   list.1.name=b
+   *   list.2.id=3
+   *   list.2.name=c
+   * </pre>
+   *
+   * @param file file name
+   * @return the created source for the given file
+   */
   static Source fromProperties(String file) {
     return from(PropertiesSource.read(file));
   }
 
+  /**
+   * <p>Reads configuration from toml files:</p>
+   *
+   * <pre>
+   *   [server]
+   *     host = "localhost"
+   *     port = 8080
+   *     active = true
+   * </pre>
+   *
+   * <p>Also it supports lists</p>
+   *
+   * <pre>
+   *   list = [ "a", "b", "c" ]
+   * </pre>
+   *
+   * <p>An also lists of complex elements:<p/>
+   *
+   * <pre>
+   *   [[list]]
+   *    id = 1
+   *    name = "a"
+   *   [[list]]
+   *    id = 2
+   *    name = "b"
+   *   [[list]]
+   *    id = 3
+   *    name = "c"
+   * </pre>
+   *
+   * @param file file name
+   * @return the created source for the given file
+   */
   static Source fromToml(String file) {
     return from(TomlSource.read(file));
+  }
+
+  /**
+   * Reads arguments from command line. With this format:
+   *
+   * <ul>
+   *   <li>{@code -param value}: for params with value.</li>
+   *   <li>{@code --param} for boolean params.</li>
+   * </ul>
+   *
+   * Example:
+   *
+   * <pre>
+   *   --host localhost --port 8080 --active
+   * </pre>
+   *
+   * Will be parsed as:
+   *
+   * <pre>
+   *   host=localhost
+   *   port=8080
+   *   active=true
+   * </pre>
+   *
+   * @param args command line arguments
+   * @return the created source for the given arguments
+   */
+  static Source fromArgs(String... args) {
+    return from(SourceModule.parseArgs(args));
   }
 
   static Source from(Properties properties) {
@@ -154,6 +248,7 @@ public interface Source {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> Iterable<DSL<T>> getIterable(String key, Class<T> type) {
       List<Object> list = toml.getList(key);
       if (list.get(0) instanceof Toml) {
@@ -168,5 +263,35 @@ public interface Source {
       Stream<Integer> integerStream = ImmutableArray.from(list).zipWithIndex().map(Tuple2::get1);
       return integerStream.map(i -> new DSL.ReadConfig<>(key + "[" + i + "]", next)).collect(toImmutableArray());
     }
+  }
+}
+
+interface SourceModule {
+  static Properties parseArgs(String[] args) {
+    Properties properties = new Properties();
+    for (int i = 0; i < args.length; i++) {
+      String current = args[i];
+      if (current.charAt(0) == '-') {
+        if (current.length() < 2) {
+          throw new IllegalArgumentException("Not a valid argument: " + current);
+        }
+        if (current.charAt(1) == '-') {
+          if (current.length() < 3) {
+            throw new IllegalArgumentException("Not a valid argument: " + current);
+          }
+          // --opt
+          properties.setProperty(current.substring(2), TRUE.toString());
+        } else {
+          if (args.length == i + 1) {
+            throw new IllegalArgumentException("Expected arg after: " + current);
+          }
+          // -opt
+          properties.setProperty(current.substring(1), args[++i]);
+        }
+      } else {
+        throw new IllegalArgumentException("invalid param: " + current);
+      }
+    }
+    return properties;
   }
 }

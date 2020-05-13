@@ -66,6 +66,19 @@ class PureCFGTest {
   }
 
   @Test
+  void runArgs() {
+    PureCFG<Config> cfg = readHostAndPort();
+
+    Source source = Source.fromArgs("-host", "localhost", "-port", "8080", "--active");
+
+    assertAll(
+        () -> assertEquals(expectedConfig, cfg.unsafeRun(source)),
+        () -> assertEquals(expectedConfig, cfg.safeRun(source).get()),
+        () -> assertEquals(expectedConfig, cfg.validatedRun(source).get())
+    );
+  }
+
+  @Test
   void iterable() {
     PureCFG<Iterable<String>> iterable = readIterable("list", String.class);
 
@@ -181,13 +194,15 @@ class PureCFGTest {
   }
 
   private PureCFG<Config> readConfig() {
+    return PureCFG.readConfig("server", readHostAndPort());
+  }
+
+  private PureCFG<Config> readHostAndPort() {
     PureCFG<String> host = readString("host");
     PureCFG<Integer> port = readInt("port");
     PureCFG<Boolean> active = readBoolean("active");
 
-    PureCFG<Config> hostAndPort = map3(host, port, active, Config::new);
-
-    return PureCFG.readConfig("server", hostAndPort);
+    return map3(host, port, active, Config::new);
   }
 
   private PureCFG<Iterable<User>> readUsers() {
