@@ -48,7 +48,7 @@ public interface Source {
    *   list.2=c
    * </pre>
    *
-   * <p>An also lists of complex elements:<p/>
+   * <p>An also lists of complex elements:</p>
    *
    * <pre>
    *   list.0.id=1
@@ -82,7 +82,7 @@ public interface Source {
    *   list = [ "a", "b", "c" ]
    * </pre>
    *
-   * <p>An also lists of complex elements:<p/>
+   * <p>An also lists of complex elements:</p>
    *
    * <pre>
    *   [[list]]
