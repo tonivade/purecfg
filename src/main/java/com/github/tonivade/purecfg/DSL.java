@@ -12,7 +12,7 @@ import com.github.tonivade.purefun.data.NonEmptyString;
 import static java.util.Objects.requireNonNull;
 
 @HigherKind
-public interface DSL<T> {
+public interface DSL<T> extends Higher1<DSL_, T> {
 
   String key();
 

@@ -15,6 +15,7 @@ import com.github.tonivade.purefun.Instance;
 import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.data.Sequence;
+import com.github.tonivade.purefun.data.Sequence_;
 import com.github.tonivade.purefun.free.FreeAp;
 import com.github.tonivade.purefun.instances.ConstInstances;
 import com.github.tonivade.purefun.instances.IdInstances;
@@ -22,9 +23,13 @@ import com.github.tonivade.purefun.instances.OptionInstances;
 import com.github.tonivade.purefun.instances.SequenceInstances;
 import com.github.tonivade.purefun.instances.ValidationInstances;
 import com.github.tonivade.purefun.type.Const;
+import com.github.tonivade.purefun.type.Const_;
 import com.github.tonivade.purefun.type.Id;
+import com.github.tonivade.purefun.type.Id_;
 import com.github.tonivade.purefun.type.Option;
+import com.github.tonivade.purefun.type.Option_;
 import com.github.tonivade.purefun.type.Validation;
+import com.github.tonivade.purefun.type.Validation_;
 import com.github.tonivade.purefun.typeclasses.Applicative;
 import com.github.tonivade.purefun.typeclasses.FunctionK;
 import com.github.tonivade.purefun.typeclasses.Monoid;
@@ -32,15 +37,15 @@ import com.github.tonivade.purefun.typeclasses.Monoid;
 import static java.util.Objects.requireNonNull;
 
 @HigherKind
-public final class PureCFG<T> {
+public final class PureCFG<T> implements Higher1<PureCFG_, T> {
 
-  private final FreeAp<DSL.µ, T> value;
+  private final FreeAp<DSL_, T> value;
 
   protected PureCFG(DSL<T> value) {
-    this(FreeAp.lift(value.kind1()));
+    this(FreeAp.lift(value));
   }
 
-  protected PureCFG(FreeAp<DSL.µ, T> value) {
+  protected PureCFG(FreeAp<DSL_, T> value) {
     this.value = requireNonNull(value);
   }
 
@@ -52,26 +57,26 @@ public final class PureCFG<T> {
     return new PureCFG<>(value.ap(apply.value));
   }
 
-  protected <G extends Kind> Higher1<G, T> foldMap(FunctionK<DSL.µ, G> functionK, Applicative<G> applicative) {
+  protected <G extends Kind> Higher1<G, T> foldMap(FunctionK<DSL_, G> functionK, Applicative<G> applicative) {
     return value.foldMap(functionK, applicative);
   }
 
   public T unsafeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new IdVisitor(Key.empty(), source)),
-        IdInstances.applicative()).fix1(Id::narrowK).get();
+        IdInstances.applicative()).fix1(Id_::narrowK).get();
   }
 
   public Option<T> safeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new OptionVisitor(Key.empty(), source)),
-        OptionInstances.applicative()).fix1(Option::narrowK);
+        OptionInstances.applicative()).fix1(Option_::narrowK);
   }
 
   public Validation<Validation.Result<String>, T> validatedRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new ValidationVisitor(Key.empty(), source)),
-        ValidationInstances.applicative(Validation.Result::concat)).fix1(Validation::narrowK);
+        ValidationInstances.applicative(Validation.Result::concat)).fix1(Validation_::narrowK);
   }
 
   public String describe() {
@@ -127,11 +132,11 @@ public final class PureCFG<T> {
     return new PureCFG<>(new DSL.ReadConfig<>(key, cfg));
   }
 
-  public static Applicative<PureCFG.µ> applicative() {
+  public static Applicative<PureCFG_> applicative() {
     return PureCFGApplicative.instance();
   }
 
-  private static final class Interpreter<F extends Kind> implements FunctionK<DSL.µ, F> {
+  private static final class Interpreter<F extends Kind> implements FunctionK<DSL_, F> {
 
     private final DSL.Visitor<F> visitor;
 
@@ -140,8 +145,8 @@ public final class PureCFG<T> {
     }
 
     @Override
-    public <T> Higher1<F, T> apply(Higher1<DSL.µ, T> from) {
-      return from.fix1(DSL::narrowK).accept(visitor);
+    public <T> Higher1<F, T> apply(Higher1<DSL_, T> from) {
+      return from.fix1(DSL_::narrowK).accept(visitor);
     }
   }
 
@@ -186,7 +191,7 @@ public final class PureCFG<T> {
     }
   }
 
-  private static final class IdVisitor extends AbstractVisitor<Id.µ> {
+  private static final class IdVisitor extends AbstractVisitor<Id_> {
 
     private IdVisitor(Key baseKey, Source source) {
       super(baseKey, source);
@@ -216,27 +221,27 @@ public final class PureCFG<T> {
     public <T> Id<Iterable<T>> visit(DSL.ReadIterable<T> value) {
       return SequenceInstances.traverse()
           .sequence(IdInstances.applicative(), readAll(value))
-          .fix1(Id::narrowK).map(s -> s.fix1(Sequence::narrowK));
+          .fix1(Id_::narrowK).map(s -> s.fix1(Sequence_::narrowK));
     }
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       return SequenceInstances.traverse()
           .sequence(IdInstances.applicative(), readAll(value))
-          .fix1(Id::narrowK).map(s -> s.fix1(Sequence::narrowK));
+          .fix1(Id_::narrowK).map(s -> s.fix1(Sequence_::narrowK));
     }
 
     @Override
     public <A> Id<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), IdInstances.applicative()).fix1(Id::narrowK);
+      return value.next().foldMap(nestedInterpreter(value), IdInstances.applicative()).fix1(Id_::narrowK);
     }
 
-    private <A> Interpreter<Id.µ> nestedInterpreter(DSL.ReadConfig<A> value) {
+    private <A> Interpreter<Id_> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new Interpreter<>(new IdVisitor(Key.with(value.key()), getSource()));
     }
   }
 
-  private static final class OptionVisitor extends AbstractVisitor<Option.µ> {
+  private static final class OptionVisitor extends AbstractVisitor<Option_> {
 
     private OptionVisitor(Key baseKey, Source source) {
       super(baseKey, source);
@@ -266,28 +271,28 @@ public final class PureCFG<T> {
     public <T> Option<Iterable<T>> visit(DSL.ReadIterable<T> value) {
       return SequenceInstances.traverse()
           .sequence(OptionInstances.applicative(), readAll(value))
-          .fix1(Option::narrowK).map(s -> s.fix1(Sequence::narrowK));
+          .fix1(Option_::narrowK).map(s -> s.fix1(Sequence_::narrowK));
     }
 
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       return SequenceInstances.traverse()
           .sequence(OptionInstances.applicative(), readAll(value))
-          .fix1(Option::narrowK).map(s -> s.fix1(Sequence::narrowK));
+          .fix1(Option_::narrowK).map(s -> s.fix1(Sequence_::narrowK));
     }
 
     @Override
     public <A> Option<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), OptionInstances.applicative()).fix1(Option::narrowK);
+      return value.next().foldMap(nestedInterpreter(value), OptionInstances.applicative()).fix1(Option_::narrowK);
     }
 
-    private <A> Interpreter<Option.µ> nestedInterpreter(DSL.ReadConfig<A> value) {
+    private <A> Interpreter<Option_> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new Interpreter<>(new OptionVisitor(Key.with(value.key()), getSource()));
     }
   }
 
   private static final class ValidationVisitor
-      extends AbstractVisitor<Higher1<Validation.µ, Validation.Result<String>>> {
+      extends AbstractVisitor<Higher1<Validation_, Validation.Result<String>>> {
 
     private ValidationVisitor(Key baseKey, Source source) {
       super(baseKey, source);
@@ -317,23 +322,23 @@ public final class PureCFG<T> {
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
       return SequenceInstances.traverse()
           .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
-          .fix1(Validation::narrowK).map(s -> s.fix1(Sequence::narrowK));
+          .fix1(Validation_::narrowK).map(s -> s.fix1(Sequence_::narrowK));
     }
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       return SequenceInstances.traverse()
           .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
-          .fix1(Validation::narrowK).map(s -> s.fix1(Sequence::narrowK));
+          .fix1(Validation_::narrowK).map(s -> s.fix1(Sequence_::narrowK));
     }
 
     @Override
     public <A> Validation<Validation.Result<String>, A> visit(DSL.ReadConfig<A> value) {
       return value.next().foldMap(nestedInterpreter(value), ValidationInstances.applicative(Validation.Result::concat))
-          .fix1(Validation::narrowK);
+          .fix1(Validation_::narrowK);
     }
 
-    private <A> Interpreter<Higher1<Validation.µ, Validation.Result<String>>> nestedInterpreter(DSL.ReadConfig<A> value) {
+    private <A> Interpreter<Higher1<Validation_, Validation.Result<String>>> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new Interpreter<>(new ValidationVisitor(Key.with(value.key()), getSource()));
     }
 
@@ -346,7 +351,7 @@ public final class PureCFG<T> {
     }
   }
 
-  private static final class ConstVisitor implements DSL.Visitor<Higher1<Const.µ, String>> {
+  private static final class ConstVisitor implements DSL.Visitor<Higher1<Const_, String>> {
 
     private final Key baseKey;
 
@@ -376,25 +381,25 @@ public final class PureCFG<T> {
 
     @Override
     public <T> Const<String, Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return visit(new DSL.ReadConfig<>(extend(value) + ".[]", value.next())).fix2(Const::narrowK).retag();
+      return visit(new DSL.ReadConfig<>(extend(value) + ".[]", value.next())).fix2(Const_::narrowK).retag();
     }
 
     @Override
-    public <T> Higher1<Higher1<Const.µ, String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
+    public <T> Const<String, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       return typeOf(value, value.type().getSimpleName() + "[]");
     }
 
     @Override
     public <A> Const<String, A> visit(DSL.ReadConfig<A> value) {
       return value.next().foldMap(
-          nestedInterpreter(value), ConstInstances.applicative(Monoid.string())).fix1(Const::narrowK);
+          nestedInterpreter(value), ConstInstances.applicative(Monoid.string())).fix1(Const_::narrowK);
     }
 
     private <T> Const<String, T> typeOf(DSL<T> value, String type) {
       return Const.of("- " + extend(value) + ": " + type + "\n");
     }
 
-    private <A> Interpreter<Higher1<Const.µ, String>> nestedInterpreter(DSL.ReadConfig<A> value) {
+    private <A> Interpreter<Higher1<Const_, String>> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new Interpreter<>(new ConstVisitor(Key.with(extend(value))));
     }
 
@@ -420,17 +425,16 @@ public final class PureCFG<T> {
 }
 
 @Instance
-interface PureCFGApplicative extends Applicative<PureCFG.µ> {
+interface PureCFGApplicative extends Applicative<PureCFG_> {
 
   @Override
-  default <T> Higher1<PureCFG.µ, T> pure(T value) {
-    return PureCFG.pure(value).kind1();
+  default <T> PureCFG<T> pure(T value) {
+    return PureCFG.pure(value);
   }
 
   @Override
-  default <T, R> Higher1<PureCFG.µ, R> ap(
-      Higher1<PureCFG.µ, T> value, Higher1<PureCFG.µ, Function1<T, R>> apply) {
-    return value.fix1(PureCFG::narrowK).ap(apply.fix1(PureCFG::narrowK)).kind1();
+  default <T, R> PureCFG<R> ap(Higher1<PureCFG_, T> value, Higher1<PureCFG_, Function1<T, R>> apply) {
+    return value.fix1(PureCFG_::narrowK).ap(apply.fix1(PureCFG_::narrowK));
   }
 }
 
