@@ -19,12 +19,19 @@ public interface DSL<T> extends Higher1<DSL_, T> {
   <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor);
 
   interface Visitor<F extends Kind> {
+
     <T> Higher1<F, T> visit(Pure<T> value);
+
     Higher1<F, String> visit(ReadString value);
+
     Higher1<F, Integer> visit(ReadInt value);
+
     Higher1<F, Boolean> visit(ReadBoolean value);
+
     <T> Higher1<F, Iterable<T>> visit(ReadPrimitiveIterable<T> value);
+
     <T> Higher1<F, Iterable<T>> visit(ReadIterable<T> value);
+
     <T> Higher1<F, T> visit(ReadConfig<T> value);
   }
 

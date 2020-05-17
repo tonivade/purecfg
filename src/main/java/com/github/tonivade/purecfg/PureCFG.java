@@ -11,7 +11,6 @@ import com.github.tonivade.purefun.Function4;
 import com.github.tonivade.purefun.Function5;
 import com.github.tonivade.purefun.Higher1;
 import com.github.tonivade.purefun.HigherKind;
-import com.github.tonivade.purefun.Instance;
 import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.data.Sequence;
@@ -133,7 +132,7 @@ public final class PureCFG<T> implements Higher1<PureCFG_, T> {
   }
 
   public static Applicative<PureCFG_> applicative() {
-    return PureCFGApplicative.instance();
+    return PureCFGApplicative.INSTANCE;
   }
 
   private static final class Interpreter<F extends Kind> implements FunctionK<DSL_, F> {
@@ -424,8 +423,9 @@ public final class PureCFG<T> implements Higher1<PureCFG_, T> {
   }
 }
 
-@Instance
 interface PureCFGApplicative extends Applicative<PureCFG_> {
+  
+  PureCFGApplicative INSTANCE = new PureCFGApplicative() { };
 
   @Override
   default <T> PureCFG<T> pure(T value) {
