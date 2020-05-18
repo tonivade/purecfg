@@ -4,6 +4,7 @@
  */
 package com.github.tonivade.purecfg;
 
+import static java.util.Objects.requireNonNull;
 import com.github.tonivade.purefun.Function1;
 import com.github.tonivade.purefun.Function2;
 import com.github.tonivade.purefun.Function3;
@@ -32,8 +33,6 @@ import com.github.tonivade.purefun.type.Validation_;
 import com.github.tonivade.purefun.typeclasses.Applicative;
 import com.github.tonivade.purefun.typeclasses.FunctionK;
 import com.github.tonivade.purefun.typeclasses.Monoid;
-
-import static java.util.Objects.requireNonNull;
 
 @HigherKind
 public final class PureCFG<T> implements Higher1<PureCFG_, T> {
@@ -149,7 +148,7 @@ public final class PureCFG<T> implements Higher1<PureCFG_, T> {
     }
   }
 
-  private static abstract class AbstractVisitor<F extends Kind> implements DSL.Visitor<F> {
+  private abstract static class AbstractVisitor<F extends Kind> implements DSL.Visitor<F> {
 
     private final Key baseKey;
     private final Source source;
@@ -424,7 +423,7 @@ public final class PureCFG<T> implements Higher1<PureCFG_, T> {
 }
 
 interface PureCFGApplicative extends Applicative<PureCFG_> {
-  
+
   PureCFGApplicative INSTANCE = new PureCFGApplicative() { };
 
   @Override
