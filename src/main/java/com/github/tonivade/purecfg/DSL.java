@@ -4,35 +4,34 @@
  */
 package com.github.tonivade.purecfg;
 
-import com.github.tonivade.purefun.Higher1;
+import static java.util.Objects.requireNonNull;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;
+import com.github.tonivade.purefun.Witness;
 import com.github.tonivade.purefun.data.NonEmptyString;
-
-import static java.util.Objects.requireNonNull;
 
 @HigherKind
 public interface DSL<T> extends DSLOf<T> {
 
   String key();
 
-  <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor);
+  <F extends Witness> Kind<F, T> accept(Visitor<F> visitor);
 
-  interface Visitor<F extends Kind> {
+  interface Visitor<F extends Witness> {
 
-    <T> Higher1<F, T> visit(Pure<T> value);
+    <T> Kind<F, T> visit(Pure<T> value);
 
-    Higher1<F, String> visit(ReadString value);
+    Kind<F, String> visit(ReadString value);
 
-    Higher1<F, Integer> visit(ReadInt value);
+    Kind<F, Integer> visit(ReadInt value);
 
-    Higher1<F, Boolean> visit(ReadBoolean value);
+    Kind<F, Boolean> visit(ReadBoolean value);
 
-    <T> Higher1<F, Iterable<T>> visit(ReadPrimitiveIterable<T> value);
+    <T> Kind<F, Iterable<T>> visit(ReadPrimitiveIterable<T> value);
 
-    <T> Higher1<F, Iterable<T>> visit(ReadIterable<T> value);
+    <T> Kind<F, Iterable<T>> visit(ReadIterable<T> value);
 
-    <T> Higher1<F, T> visit(ReadConfig<T> value);
+    <T> Kind<F, T> visit(ReadConfig<T> value);
   }
 
   abstract class AbstractRead<T> implements DSL<T> {
@@ -63,7 +62,7 @@ public interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor) {
+    public <F extends Witness> Kind<F, T> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -75,7 +74,7 @@ public interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F extends Kind> Higher1<F, Integer> accept(Visitor<F> visitor) {
+    public <F extends Witness> Kind<F, Integer> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -87,7 +86,7 @@ public interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F extends Kind> Higher1<F, String> accept(Visitor<F> visitor) {
+    public <F extends Witness> Kind<F, String> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -99,7 +98,7 @@ public interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F extends Kind> Higher1<F, Boolean> accept(Visitor<F> visitor) {
+    public <F extends Witness> Kind<F, Boolean> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -118,7 +117,7 @@ public interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F extends Kind> Higher1<F, Iterable<T>> accept(Visitor<F> visitor) {
+    public <F extends Witness> Kind<F, Iterable<T>> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -137,7 +136,7 @@ public interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F extends Kind> Higher1<F, Iterable<T>> accept(Visitor<F> visitor) {
+    public <F extends Witness> Kind<F, Iterable<T>> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -156,7 +155,7 @@ public interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F extends Kind> Higher1<F, T> accept(Visitor<F> visitor) {
+    public <F extends Witness> Kind<F, T> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
