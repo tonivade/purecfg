@@ -40,10 +40,10 @@ test {
 }
 
 dependencies {
-  annotationProcessor 'com.github.tonivade:purefun-processor:1.9-SNAPSHOT'
-  api 'com.github.tonivade:purefun-free:1.9-SNAPSHOT'
-  implementation 'com.github.tonivade:purefun-effect:1.9-SNAPSHOT'
-  implementation 'com.github.tonivade:purefun-instances:1.9-SNAPSHOT'
+  annotationProcessor 'com.github.tonivade:purefun-processor:2.0'
+  api 'com.github.tonivade:purefun-free:2.0'
+  implementation 'com.github.tonivade:purefun-effect:2.0'
+  implementation 'com.github.tonivade:purefun-instances:2.0'
   implementation 'com.moandjiezana.toml:toml4j:0.7.2'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
   testImplementation 'org.junit.platform:junit-platform-runner:1.6.2'
