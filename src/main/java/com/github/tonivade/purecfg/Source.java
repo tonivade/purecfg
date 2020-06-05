@@ -4,12 +4,9 @@
  */
 package com.github.tonivade.purecfg;
 
-import com.github.tonivade.purefun.Tuple2;
-import com.github.tonivade.purefun.data.ImmutableArray;
-import com.github.tonivade.purefun.type.Option;
-import com.github.tonivade.purefun.type.Try;
-import com.moandjiezana.toml.Toml;
-
+import static com.github.tonivade.purefun.data.ImmutableArray.toImmutableArray;
+import static java.lang.Boolean.TRUE;
+import static java.util.Objects.requireNonNull;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
@@ -17,10 +14,11 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import static com.github.tonivade.purefun.data.ImmutableArray.toImmutableArray;
-import static java.lang.Boolean.TRUE;
-import static java.util.Objects.requireNonNull;
+import com.github.tonivade.purefun.Tuple2;
+import com.github.tonivade.purefun.data.ImmutableArray;
+import com.github.tonivade.purefun.type.Option;
+import com.github.tonivade.purefun.type.Try;
+import com.moandjiezana.toml.Toml;
 
 public interface Source {
 
@@ -201,8 +199,9 @@ public interface Source {
           return (DSL<T>) new DSL.ReadInt(key);
         case "Boolean":
           return (DSL<T>) new DSL.ReadBoolean(key);
+        default:
+          throw new UnsupportedOperationException("this class is not supported: " + type.getName());
       }
-      throw new UnsupportedOperationException("this class is not supported: " + type.getName());
     }
 
     private Option<String> readString(String key) {

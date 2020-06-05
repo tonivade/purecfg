@@ -10,7 +10,7 @@ import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.Witness;
 import com.github.tonivade.purefun.data.NonEmptyString;
 
-@HigherKind
+@HigherKind(sealed = true)
 public interface DSL<T> extends DSLOf<T> {
 
   String key();
@@ -34,7 +34,7 @@ public interface DSL<T> extends DSLOf<T> {
     <T> Kind<F, T> visit(ReadConfig<T> value);
   }
 
-  abstract class AbstractRead<T> implements DSL<T> {
+  abstract class AbstractRead<T> implements SealedDSL<T> {
 
     private final NonEmptyString key;
 
