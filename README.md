@@ -2,7 +2,7 @@
 
 Inspired by this [presentation](https://github.com/jdegoes/scalaworld-2015/blob/master/presentation.md)
 
-# Objectives
+## Objectives
 
 - Create a pure functional library to load configuration from different sources, like properties files, json, yaml or any other source. 
 - Allow to switch from sources without changing the program.
@@ -11,7 +11,7 @@ Inspired by this [presentation](https://github.com/jdegoes/scalaworld-2015/blob/
 
 Now it supports properties and toml files.
 
-# Example
+## Example
 
 ```toml
 [server]
@@ -28,3 +28,7 @@ var program = PureCFG.readConfig("server", readHostAndPort);
 var config = program.unsafeRun(Source.fromToml("config.toml"));
 assertEquals(new HostAndPort("localhost", 8080), config);
 ```
+
+## License
+
+Distributed under MIT License
