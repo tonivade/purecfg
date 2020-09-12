@@ -50,6 +50,7 @@ compileTestJava {
 dependencies {
   annotationProcessor 'com.github.tonivade:purefun-processor:2.2-SNAPSHOT'
   api 'com.github.tonivade:purefun-free:2.2-SNAPSHOT'
+  implementation 'com.github.tonivade:purefun-monad:2.2-SNAPSHOT'
   implementation 'com.github.tonivade:purefun-effect:2.2-SNAPSHOT'
   implementation 'com.github.tonivade:purefun-instances:2.2-SNAPSHOT'
   implementation 'com.moandjiezana.toml:toml4j:0.7.2'

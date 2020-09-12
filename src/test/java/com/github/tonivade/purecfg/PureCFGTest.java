@@ -4,78 +4,114 @@
  */
 package com.github.tonivade.purecfg;
 
+import static com.github.tonivade.purecfg.PureCFG.mapN;
+import static com.github.tonivade.purecfg.PureCFG.readBoolean;
+import static com.github.tonivade.purecfg.PureCFG.readInt;
+import static com.github.tonivade.purecfg.PureCFG.readIterable;
+import static com.github.tonivade.purecfg.PureCFG.readString;
+import static com.github.tonivade.purecfg.Source.from;
+import static com.github.tonivade.purefun.Validator.equalsTo;
+import static com.github.tonivade.purefun.data.Sequence.listOf;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Objects;
+import java.util.Properties;
+
+import org.junit.jupiter.api.Test;
+
+import com.github.tonivade.purecheck.spec.IOTestSpec;
 import com.github.tonivade.purefun.Tuple;
 import com.github.tonivade.purefun.Tuple3;
 import com.github.tonivade.purefun.data.ImmutableList;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 import com.moandjiezana.toml.Toml;
-import org.junit.jupiter.api.Test;
 
-import java.util.Objects;
-import java.util.Properties;
-
-import static com.github.tonivade.purecfg.PureCFG.map2;
-import static com.github.tonivade.purecfg.PureCFG.map3;
-import static com.github.tonivade.purecfg.PureCFG.readBoolean;
-import static com.github.tonivade.purecfg.PureCFG.readInt;
-import static com.github.tonivade.purecfg.PureCFG.readIterable;
-import static com.github.tonivade.purecfg.PureCFG.readString;
-import static com.github.tonivade.purecfg.Source.from;
-import static com.github.tonivade.purefun.data.Sequence.listOf;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-class PureCFGTest {
+class PureCFGTest extends IOTestSpec {
 
   private final ImmutableList<User> expectedUsers = listOf(
       new User("a", "a"),
       new User("b", "b"),
       new User("c", "c"));
+
   private final Config expectedConfig = new Config("localhost", 8080, true);
 
   @Test
   void run() {
-    PureCFG<Config> cfg = readConfig();
-
     Properties properties = new Properties();
     properties.put("server.host", "localhost");
     properties.put("server.port", "8080");
     properties.put("server.active", "true");
-    Source source = Source.from(properties);
 
-    assertAll(
-        () -> assertEquals(expectedConfig, cfg.unsafeRun(source)),
-        () -> assertEquals(expectedConfig, cfg.safeRun(source).get()),
-        () -> assertEquals(expectedConfig, cfg.validatedRun(source).get())
-    );
+    suite("PureCFG", 
+        it.should("read config form properties file")
+          .given(Source.from(properties))
+          .when(source -> readConfig().unsafeRun(source))
+          .thenMustBe(equalsTo(expectedConfig)),
+
+        it.should("read config form properties file")
+          .given(Source.from(properties))
+          .when(source -> readConfig().safeRun(source))
+          .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
+
+        it.should("read config form properties file")
+          .given(Source.from(properties))
+          .when(source -> readConfig().validatedRun(source))
+          .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
+          
+        ).run().assertion();
   }
 
   @Test
   void runToml() {
-    PureCFG<Config> cfg = readConfig();
-    Toml toml = new Toml().read("[server]\n  host = \"localhost\"\n  port = 8080\n  active = true");
-    Source source = Source.from(toml);
+    Toml toml = new Toml().read(
+        "[server]\n"
+        + "  host = \"localhost\"\n"
+        + "  port = 8080\n"
+        + "  active = true");
 
-    assertAll(
-        () -> assertEquals(expectedConfig, cfg.unsafeRun(source)),
-        () -> assertEquals(expectedConfig, cfg.safeRun(source).get()),
-        () -> assertEquals(expectedConfig, cfg.validatedRun(source).get())
-    );
+    suite("PureCFG", 
+        it.should("read config form toml file")
+          .given(Source.from(toml))
+          .when(source -> readConfig().unsafeRun(source))
+          .thenMustBe(equalsTo(expectedConfig)),
+
+        it.should("read config form toml file")
+          .given(Source.from(toml))
+          .when(source -> readConfig().safeRun(source))
+          .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
+
+        it.should("read config form toml file")
+          .given(Source.from(toml))
+          .when(source -> readConfig().validatedRun(source))
+          .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
+          
+        ).run().assertion();
   }
 
   @Test
   void runArgs() {
-    PureCFG<Config> cfg = readHostAndPort();
+    String[] args = { "-host", "localhost", "-port", "8080", "--active" };
 
-    Source source = Source.fromArgs("-host", "localhost", "-port", "8080", "--active");
+    suite("PureCFG", 
+        it.should("read config form command line params")
+          .given(Source.fromArgs(args))
+          .when(source -> readHostAndPort().unsafeRun(source))
+          .thenMustBe(equalsTo(expectedConfig)),
 
-    assertAll(
-        () -> assertEquals(expectedConfig, cfg.unsafeRun(source)),
-        () -> assertEquals(expectedConfig, cfg.safeRun(source).get()),
-        () -> assertEquals(expectedConfig, cfg.validatedRun(source).get())
-    );
+        it.should("read config form command line params")
+          .given(Source.fromArgs(args))
+          .when(source -> readHostAndPort().safeRun(source))
+          .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
+
+        it.should("read config form command line params")
+          .given(Source.fromArgs(args))
+          .when(source -> readHostAndPort().validatedRun(source))
+          .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
+          
+        ).run().assertion();
   }
 
   @Test
@@ -139,7 +175,7 @@ class PureCFGTest {
   @Test
   void analyzeListOf() {
     PureCFG<Iterable<Tuple3<String, Integer, Boolean>>> iterable =
-        readIterable("list", map3(readString("a"), readInt("b"), readBoolean("c"), Tuple::of));
+        readIterable("list", mapN(readString("a"), readInt("b"), readBoolean("c"), Tuple::of));
 
     assertEquals("- list.[].a: String\n- list.[].b: Integer\n- list.[].c: Boolean\n", iterable.describe());
   }
@@ -202,11 +238,11 @@ class PureCFGTest {
     PureCFG<Integer> port = readInt("port");
     PureCFG<Boolean> active = readBoolean("active");
 
-    return map3(host, port, active, Config::new);
+    return mapN(host, port, active, Config::new);
   }
 
   private PureCFG<Iterable<User>> readUsers() {
-    PureCFG<User> userProgram = map2(readString("name"), readString("pass"), User::new);
+    PureCFG<User> userProgram = mapN(readString("name"), readString("pass"), User::new);
     return readIterable("user", userProgram);
   }
 }
@@ -227,10 +263,10 @@ final class Config {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    Config config = (Config) o;
-    return port == config.port &&
-        active == config.active &&
-        Objects.equals(host, config.host);
+    Config other = (Config) o;
+    return this.port == other.port &&
+        this.active == other.active &&
+        Objects.equals(this.host, other.host);
   }
 
   @Override
@@ -262,8 +298,8 @@ final class User {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    User user = (User) o;
-    return Objects.equals(name, user.name) && Objects.equals(pass, user.pass);
+    User other = (User) o;
+    return Objects.equals(this.name, other.name) && Objects.equals(this.pass, other.pass);
   }
 
   @Override

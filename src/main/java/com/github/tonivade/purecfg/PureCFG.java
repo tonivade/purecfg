@@ -90,23 +90,23 @@ public final class PureCFG<T> implements PureCFGOf<T> {
         ConstInstances.applicative(Monoid.string()));
   }
 
-  public static <A, B, C> PureCFG<C> map2(PureCFG<A> fa, PureCFG<B> fb, Function2<A, B, C> apply) {
+  public static <A, B, C> PureCFG<C> mapN(PureCFG<A> fa, PureCFG<B> fb, Function2<A, B, C> apply) {
     return fb.ap(fa.map(apply.curried()));
   }
 
-  public static <A, B, C, D> PureCFG<D> map3(
+  public static <A, B, C, D> PureCFG<D> mapN(
       PureCFG<A> fa, PureCFG<B> fb, PureCFG<C> fc, Function3<A, B, C, D> apply) {
-    return fc.ap(map2(fa, fb, (a, b) -> apply.curried().apply(a).apply(b)));
+    return fc.ap(mapN(fa, fb, (a, b) -> apply.curried().apply(a).apply(b)));
   }
 
-  public static <A, B, C, D, E> PureCFG<E> map4(
+  public static <A, B, C, D, E> PureCFG<E> mapN(
       PureCFG<A> fa, PureCFG<B> fb, PureCFG<C> fc, PureCFG<D> fd, Function4<A, B, C, D, E> apply) {
-    return fd.ap(map3(fa, fb, fc, (a, b, c) -> apply.curried().apply(a).apply(b).apply(c)));
+    return fd.ap(mapN(fa, fb, fc, (a, b, c) -> apply.curried().apply(a).apply(b).apply(c)));
   }
 
-  public static <A, B, C, D, E, F> PureCFG<F> map5(
+  public static <A, B, C, D, E, F> PureCFG<F> mapN(
       PureCFG<A> fa, PureCFG<B> fb, PureCFG<C> fc, PureCFG<D> fd, PureCFG<E> fe, Function5<A, B, C, D, E, F> apply) {
-    return fe.ap(map4(fa, fb, fc, fd, (a, b, c, d) -> apply.curried().apply(a).apply(b).apply(c).apply(d)));
+    return fe.ap(mapN(fa, fb, fc, fd, (a, b, c, d) -> apply.curried().apply(a).apply(b).apply(c).apply(d)));
   }
 
   public static <T> PureCFG<T> pure(T value) {
