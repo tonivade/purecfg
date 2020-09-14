@@ -29,7 +29,7 @@ import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 import com.moandjiezana.toml.Toml;
 
-class PureCFGTest extends IOTestSpec {
+class PureCFGTest extends IOTestSpec<String> {
 
   private final ImmutableList<User> expectedUsers = listOf(
       new User("a", "a"),
@@ -46,19 +46,20 @@ class PureCFGTest extends IOTestSpec {
     properties.put("server.active", "true");
 
     suite("PureCFG", 
+
         it.should("read config form properties file")
           .given(Source.from(properties))
-          .when(source -> readConfig().unsafeRun(source))
+          .when(readConfig()::unsafeRun)
           .thenMustBe(equalsTo(expectedConfig)),
 
         it.should("read config form properties file")
           .given(Source.from(properties))
-          .when(source -> readConfig().safeRun(source))
+          .when(readConfig()::safeRun)
           .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
 
         it.should("read config form properties file")
           .given(Source.from(properties))
-          .when(source -> readConfig().validatedRun(source))
+          .when(readConfig()::validatedRun)
           .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
           
         ).run().assertion();
@@ -73,19 +74,20 @@ class PureCFGTest extends IOTestSpec {
         + "  active = true");
 
     suite("PureCFG", 
+
         it.should("read config form toml file")
           .given(Source.from(toml))
-          .when(source -> readConfig().unsafeRun(source))
+          .when(readConfig()::unsafeRun)
           .thenMustBe(equalsTo(expectedConfig)),
 
         it.should("read config form toml file")
           .given(Source.from(toml))
-          .when(source -> readConfig().safeRun(source))
+          .when(readConfig()::safeRun)
           .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
 
         it.should("read config form toml file")
           .given(Source.from(toml))
-          .when(source -> readConfig().validatedRun(source))
+          .when(readConfig()::validatedRun)
           .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
           
         ).run().assertion();
@@ -96,19 +98,20 @@ class PureCFGTest extends IOTestSpec {
     String[] args = { "-host", "localhost", "-port", "8080", "--active" };
 
     suite("PureCFG", 
+        
         it.should("read config form command line params")
           .given(Source.fromArgs(args))
-          .when(source -> readHostAndPort().unsafeRun(source))
+          .when(readHostAndPort()::unsafeRun)
           .thenMustBe(equalsTo(expectedConfig)),
 
         it.should("read config form command line params")
           .given(Source.fromArgs(args))
-          .when(source -> readHostAndPort().safeRun(source))
+          .when(readHostAndPort()::safeRun)
           .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
 
         it.should("read config form command line params")
           .given(Source.fromArgs(args))
-          .when(source -> readHostAndPort().validatedRun(source))
+          .when(readHostAndPort()::validatedRun)
           .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
           
         ).run().assertion();
