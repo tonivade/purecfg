@@ -209,17 +209,17 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public Id<String> visit(DSL.ReadString value) {
-      return Id.of(getString(value).getOrElseThrow(NullPointerException::new));
+      return Id.of(getString(value).getOrElseThrow());
     }
 
     @Override
     public Id<Integer> visit(DSL.ReadInt value) {
-      return Id.of(getInteger(value).getOrElseThrow(NullPointerException::new));
+      return Id.of(getInteger(value).getOrElseThrow());
     }
 
     @Override
     public Id<Boolean> visit(DSL.ReadBoolean value) {
-      return Id.of(getBoolean(value).getOrElseThrow(NullPointerException::new));
+      return Id.of(getBoolean(value).getOrElseThrow());
     }
 
     @Override
