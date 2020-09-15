@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -191,7 +192,7 @@ class PureCFGTest extends IOTestSpec<String> {
     Source source = Source.from(toml);
 
     assertAll(
-        () -> assertThrows(NullPointerException.class, () -> cfg.unsafeRun(source)),
+        () -> assertThrows(NoSuchElementException.class, () -> cfg.unsafeRun(source)),
         () -> assertEquals(Option.none(), cfg.safeRun(source)),
         () -> assertEquals(
             Validation.invalid(
@@ -211,7 +212,7 @@ class PureCFGTest extends IOTestSpec<String> {
     Source source = Source.from(properties);
 
     assertAll(
-        () -> assertThrows(NullPointerException.class, () -> cfg.unsafeRun(source)),
+        () -> assertThrows(NoSuchElementException.class, () -> cfg.unsafeRun(source)),
         () -> assertEquals(Option.none(), cfg.safeRun(source)),
         () -> assertEquals(
             Validation.invalid(
