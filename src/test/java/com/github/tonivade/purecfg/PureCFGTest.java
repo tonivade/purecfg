@@ -22,10 +22,12 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
+import com.github.tonivade.purecheck.TestSuite;
 import com.github.tonivade.purecheck.spec.IOTestSpec;
 import com.github.tonivade.purefun.Tuple;
 import com.github.tonivade.purefun.Tuple3;
 import com.github.tonivade.purefun.data.ImmutableList;
+import com.github.tonivade.purefun.monad.IO_;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 import com.moandjiezana.toml.Toml;
@@ -46,24 +48,7 @@ class PureCFGTest extends IOTestSpec<String> {
     properties.put("server.port", "8080");
     properties.put("server.active", "true");
 
-    suite("PureCFG", 
-
-        it.should("read config form properties file")
-          .given(Source.from(properties))
-          .when(readConfig()::unsafeRun)
-          .thenMustBe(equalsTo(expectedConfig)),
-
-        it.should("read config form properties file")
-          .given(Source.from(properties))
-          .when(readConfig()::safeRun)
-          .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
-
-        it.should("read config form properties file")
-          .given(Source.from(properties))
-          .when(readConfig()::validatedRun)
-          .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
-          
-        ).run().assertion();
+    test(readConfig(), Source.from(properties)).run().assertion();
   }
 
   @Test
@@ -74,48 +59,14 @@ class PureCFGTest extends IOTestSpec<String> {
         + "  port = 8080\n"
         + "  active = true");
 
-    suite("PureCFG", 
-
-        it.should("read config form toml file")
-          .given(Source.from(toml))
-          .when(readConfig()::unsafeRun)
-          .thenMustBe(equalsTo(expectedConfig)),
-
-        it.should("read config form toml file")
-          .given(Source.from(toml))
-          .when(readConfig()::safeRun)
-          .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
-
-        it.should("read config form toml file")
-          .given(Source.from(toml))
-          .when(readConfig()::validatedRun)
-          .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
-          
-        ).run().assertion();
+    test(readConfig(), Source.from(toml)).run().assertion();
   }
 
   @Test
   void runArgs() {
     String[] args = { "-host", "localhost", "-port", "8080", "--active" };
 
-    suite("PureCFG", 
-        
-        it.should("read config form command line params")
-          .given(Source.fromArgs(args))
-          .when(readHostAndPort()::unsafeRun)
-          .thenMustBe(equalsTo(expectedConfig)),
-
-        it.should("read config form command line params")
-          .given(Source.fromArgs(args))
-          .when(readHostAndPort()::safeRun)
-          .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
-
-        it.should("read config form command line params")
-          .given(Source.fromArgs(args))
-          .when(readHostAndPort()::validatedRun)
-          .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
-          
-        ).run().assertion();
+    test(readHostAndPort(), Source.fromArgs(args)).run().assertion();
   }
 
   @Test
@@ -231,6 +182,27 @@ class PureCFGTest extends IOTestSpec<String> {
     String result = program.describe();
 
     assertEquals("- server.host: String\n- server.port: Integer\n- server.active: Boolean\n", result);
+  }
+
+  private TestSuite<IO_, String> test(PureCFG<Config> program, Source source) {
+    return suite("PureCFG", 
+        
+        it.should("read config from " + source)
+          .given(source)
+          .when(program::unsafeRun)
+          .thenMustBe(equalsTo(expectedConfig)),
+
+        it.should("read config form command line params")
+          .given(source)
+          .when(program::safeRun)
+          .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
+
+        it.should("read config form command line params")
+          .given(source)
+          .when(program::validatedRun)
+          .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
+          
+        );
   }
 
   private PureCFG<Config> readConfig() {
