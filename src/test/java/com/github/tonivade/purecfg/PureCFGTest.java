@@ -192,12 +192,12 @@ class PureCFGTest extends IOTestSpec<String> {
           .when(program::unsafeRun)
           .thenMustBe(equalsTo(expectedConfig)),
 
-        it.should("read config form command line params")
+        it.should("read config form " + source)
           .given(source)
           .when(program::safeRun)
           .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
 
-        it.should("read config form command line params")
+        it.should("read config form " + source)
           .given(source)
           .when(program::validatedRun)
           .thenMustBe(equalsTo(expectedConfig).compose(Validation::get))
