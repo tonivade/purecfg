@@ -54,11 +54,11 @@ public final class PureCFG<T> implements PureCFGOf<T> {
     this.value = checkNonNull(value);
   }
 
-  public <R> PureCFG<R> map(Function1<T, R> mapper) {
+  public <R> PureCFG<R> map(Function1<? super T, ? extends R> mapper) {
     return new PureCFG<>(value.map(mapper));
   }
 
-  public <R> PureCFG<R> ap(PureCFG<Function1<T, R>> apply) {
+  public <R> PureCFG<R> ap(PureCFG<Function1<? super T, ? extends R>> apply) {
     return new PureCFG<>(value.ap(apply.value));
   }
 
@@ -439,7 +439,7 @@ interface PureCFGApplicative extends Applicative<PureCFG_> {
   }
 
   @Override
-  default <T, R> PureCFG<R> ap(Kind<PureCFG_, T> value, Kind<PureCFG_, Function1<T, R>> apply) {
+  default <T, R> PureCFG<R> ap(Kind<PureCFG_, T> value, Kind<PureCFG_, Function1<? super T, ? extends R>> apply) {
     return value.fix(toPureCFG()).ap(apply.fix(toPureCFG()));
   }
 }
