@@ -439,8 +439,8 @@ interface PureCFGApplicative extends Applicative<PureCFG_> {
   }
 
   @Override
-  default <T, R> PureCFG<R> ap(Kind<PureCFG_, T> value, Kind<PureCFG_, Function1<? super T, ? extends R>> apply) {
-    return value.fix(toPureCFG()).ap(apply.fix(toPureCFG()));
+  default <T, R> PureCFG<R> ap(Kind<PureCFG_, ? extends T> value, Kind<PureCFG_, Function1<? super T, ? extends R>> apply) {
+    return value.fix(PureCFGOf::<T>narrowK).ap(apply.fix(toPureCFG()));
   }
 }
 
