@@ -5,13 +5,13 @@
 package com.github.tonivade.purecfg;
 
 import static com.github.tonivade.purecfg.DSLOf.toDSL;
-import static com.github.tonivade.purecfg.PureCFGOf.toPureCFG;
 import static com.github.tonivade.purefun.Precondition.checkNonNull;
 import static com.github.tonivade.purefun.data.SequenceOf.toSequence;
 import static com.github.tonivade.purefun.type.ConstOf.toConst;
 import static com.github.tonivade.purefun.type.IdOf.toId;
 import static com.github.tonivade.purefun.type.OptionOf.toOption;
 import static com.github.tonivade.purefun.type.ValidationOf.toValidation;
+
 import com.github.tonivade.purefun.Function1;
 import com.github.tonivade.purefun.Function2;
 import com.github.tonivade.purefun.Function3;
@@ -90,22 +90,26 @@ public final class PureCFG<T> implements PureCFGOf<T> {
         ConstInstances.applicative(Monoid.string()));
   }
 
-  public static <A, B, C> PureCFG<C> mapN(PureCFG<A> fa, PureCFG<B> fb, Function2<A, B, C> apply) {
+  public static <A, B, C> PureCFG<C> mapN(PureCFG<? extends A> fa, PureCFG<? extends B> fb, 
+      Function2<? super A, ? super B, ? extends C> apply) {
     return fb.ap(fa.map(apply.curried()));
   }
 
   public static <A, B, C, D> PureCFG<D> mapN(
-      PureCFG<A> fa, PureCFG<B> fb, PureCFG<C> fc, Function3<A, B, C, D> apply) {
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, 
+      Function3<? super A, ? super B, ? super C, ? extends D> apply) {
     return fc.ap(mapN(fa, fb, (a, b) -> apply.curried().apply(a).apply(b)));
   }
 
   public static <A, B, C, D, E> PureCFG<E> mapN(
-      PureCFG<A> fa, PureCFG<B> fb, PureCFG<C> fc, PureCFG<D> fd, Function4<A, B, C, D, E> apply) {
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd, 
+      Function4<? super A, ? super B, ? super C, ? super D, ? extends E> apply) {
     return fd.ap(mapN(fa, fb, fc, (a, b, c) -> apply.curried().apply(a).apply(b).apply(c)));
   }
 
   public static <A, B, C, D, E, F> PureCFG<F> mapN(
-      PureCFG<A> fa, PureCFG<B> fb, PureCFG<C> fc, PureCFG<D> fd, PureCFG<E> fe, Function5<A, B, C, D, E, F> apply) {
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd, PureCFG<? extends E> fe, 
+      Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends F> apply) {
     return fe.ap(mapN(fa, fb, fc, fd, (a, b, c, d) -> apply.curried().apply(a).apply(b).apply(c).apply(d)));
   }
 
@@ -129,11 +133,11 @@ public final class PureCFG<T> implements PureCFGOf<T> {
     return new PureCFG<>(new DSL.ReadPrimitiveIterable<>(key, type));
   }
 
-  public static <T> PureCFG<Iterable<T>> readIterable(String key, PureCFG<T> item) {
+  public static <T> PureCFG<Iterable<T>> readIterable(String key, PureCFG<? extends T> item) {
     return new PureCFG<>(new DSL.ReadIterable<>(key, item));
   }
 
-  public static <T> PureCFG<T> readConfig(String key, PureCFG<T> cfg) {
+  public static <T> PureCFG<T> readConfig(String key, PureCFG<? extends T> cfg) {
     return new PureCFG<>(new DSL.ReadConfig<>(key, cfg));
   }
 
@@ -439,8 +443,9 @@ interface PureCFGApplicative extends Applicative<PureCFG_> {
   }
 
   @Override
-  default <T, R> PureCFG<R> ap(Kind<PureCFG_, ? extends T> value, Kind<PureCFG_, Function1<? super T, ? extends R>> apply) {
-    return value.fix(PureCFGOf::<T>narrowK).ap(apply.fix(toPureCFG()));
+  default <T, R> PureCFG<R> ap(Kind<PureCFG_, ? extends T> value, 
+      Kind<PureCFG_, ? extends Function1<? super T, ? extends R>> apply) {
+    return value.fix(PureCFGOf::<T>narrowK).ap(apply.fix(PureCFGOf::narrowK));
   }
 }
 

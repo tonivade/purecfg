@@ -124,15 +124,15 @@ public interface DSL<T> extends DSLOf<T> {
 
   final class ReadIterable<T> extends AbstractRead<Iterable<T>> {
 
-    private final PureCFG<T> next;
+    private final PureCFG<? extends T> next;
 
-    protected ReadIterable(String key, PureCFG<T> next) {
+    protected ReadIterable(String key, PureCFG<? extends T> next) {
       super(key);
       this.next = requireNonNull(next);
     }
 
     public PureCFG<T> next() {
-      return next;
+      return PureCFGOf.narrowK(next);
     }
 
     @Override
@@ -143,15 +143,15 @@ public interface DSL<T> extends DSLOf<T> {
 
   final class ReadConfig<T> extends AbstractRead<T> {
 
-    private final PureCFG<T> next;
+    private final PureCFG<? extends T> next;
 
-    protected ReadConfig(String key, PureCFG<T> next) {
+    protected ReadConfig(String key, PureCFG<? extends T> next) {
       super(key);
       this.next = requireNonNull(next);
     }
 
     public PureCFG<T> next() {
-      return next;
+      return PureCFGOf.narrowK(next);
     }
 
     @Override
