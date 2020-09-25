@@ -4,7 +4,6 @@
  */
 package com.github.tonivade.purecfg;
 
-import static com.github.tonivade.purecfg.DSLOf.toDSL;
 import static com.github.tonivade.purefun.Precondition.checkNonNull;
 import static com.github.tonivade.purefun.data.SequenceOf.toSequence;
 import static com.github.tonivade.purefun.type.ConstOf.toConst;
@@ -154,8 +153,8 @@ public final class PureCFG<T> implements PureCFGOf<T> {
     }
 
     @Override
-    public <T> Kind<F, T> apply(Kind<DSL_, T> from) {
-      return from.fix(toDSL()).accept(visitor);
+    public <T> Kind<F, T> apply(Kind<DSL_, ? extends T> from) {
+      return from.fix(DSLOf::<T>narrowK).accept(visitor);
     }
   }
 
