@@ -24,8 +24,6 @@ import com.github.tonivade.purefun.data.Sequence;
 import com.github.tonivade.purefun.data.SequenceOf;
 import com.github.tonivade.purefun.data.Sequence_;
 import com.github.tonivade.purefun.free.FreeAp;
-import com.github.tonivade.purefun.instances.ConstInstances;
-import com.github.tonivade.purefun.instances.ValidationInstances;
 import com.github.tonivade.purefun.type.Const;
 import com.github.tonivade.purefun.type.Const_;
 import com.github.tonivade.purefun.type.Id;
@@ -33,11 +31,13 @@ import com.github.tonivade.purefun.type.Id_;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Option_;
 import com.github.tonivade.purefun.type.Validation;
+import com.github.tonivade.purefun.type.Validation.Result;
 import com.github.tonivade.purefun.type.Validation_;
 import com.github.tonivade.purefun.typeclasses.Applicative;
 import com.github.tonivade.purefun.typeclasses.FunctionK;
 import com.github.tonivade.purefun.typeclasses.Instance;
 import com.github.tonivade.purefun.typeclasses.Monoid;
+import com.github.tonivade.purefun.typeclasses.Semigroup;
 
 @HigherKind
 public final class PureCFG<T> implements PureCFGOf<T> {
@@ -77,15 +77,19 @@ public final class PureCFG<T> implements PureCFGOf<T> {
   }
 
   public Validation<Validation.Result<String>, T> validatedRun(Source source) {
+    Instance<Kind<Validation_, Validation.Result<String>>> instance = 
+        new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+    Semigroup<Result<String>> semigroup = Validation.Result::concat;
     return value.foldMap(
         new Interpreter<>(new ValidationVisitor(Key.empty(), source)),
-        ValidationInstances.applicative(Validation.Result::concat)).fix(toValidation());
+        instance.applicative(semigroup)).fix(toValidation());
   }
 
   public String describe() {
+    Instance<Kind<Const_, String>> instance = new Instance<Kind<Const_, String>>() {};
     return value.analyze(
         new Interpreter<>(new ConstVisitor(Key.empty())),
-        ConstInstances.applicative(Monoid.string()));
+        instance.applicative(Monoid.string()));
   }
 
   public static <A, B, C> PureCFG<C> mapN(PureCFG<? extends A> fa, PureCFG<? extends B> fb, 
@@ -327,21 +331,30 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
+      Instance<Kind<Validation_, Validation.Result<String>>> instance = 
+          new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      Semigroup<Result<String>> semigroup = Validation.Result::concat;
       return Instance.traverse(Sequence_.class)
-          .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
+          .sequence(instance.applicative(semigroup), readAll(value))
           .fix(toValidation()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
+      Instance<Kind<Validation_, Validation.Result<String>>> instance = 
+          new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      Semigroup<Result<String>> semigroup = Validation.Result::concat;
       return Instance.traverse(Sequence_.class)
-          .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
+          .sequence(instance.applicative(semigroup), readAll(value))
           .fix(toValidation()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Validation<Validation.Result<String>, A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), ValidationInstances.applicative(Validation.Result::concat))
+      Instance<Kind<Validation_, Validation.Result<String>>> instance = 
+          new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      Semigroup<Result<String>> semigroup = Validation.Result::concat;
+      return value.next().foldMap(nestedInterpreter(value), instance.applicative(semigroup))
           .fix(toValidation());
     }
 
@@ -398,8 +411,9 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <A> Const<String, A> visit(DSL.ReadConfig<A> value) {
+      Instance<Kind<Const_, String>> instance = new Instance<Kind<Const_, String>>() {};
       return value.next().foldMap(
-          nestedInterpreter(value), ConstInstances.applicative(Monoid.string())).fix(toConst());
+          nestedInterpreter(value), instance.applicative(Monoid.string())).fix(toConst());
     }
 
     private <T> Const<String, T> typeOf(DSL<T> value, String type) {
