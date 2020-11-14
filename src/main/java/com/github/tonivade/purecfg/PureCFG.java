@@ -22,11 +22,9 @@ import com.github.tonivade.purefun.Witness;
 import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.data.Sequence;
 import com.github.tonivade.purefun.data.SequenceOf;
+import com.github.tonivade.purefun.data.Sequence_;
 import com.github.tonivade.purefun.free.FreeAp;
 import com.github.tonivade.purefun.instances.ConstInstances;
-import com.github.tonivade.purefun.instances.IdInstances;
-import com.github.tonivade.purefun.instances.OptionInstances;
-import com.github.tonivade.purefun.instances.SequenceInstances;
 import com.github.tonivade.purefun.instances.ValidationInstances;
 import com.github.tonivade.purefun.type.Const;
 import com.github.tonivade.purefun.type.Const_;
@@ -38,6 +36,7 @@ import com.github.tonivade.purefun.type.Validation;
 import com.github.tonivade.purefun.type.Validation_;
 import com.github.tonivade.purefun.typeclasses.Applicative;
 import com.github.tonivade.purefun.typeclasses.FunctionK;
+import com.github.tonivade.purefun.typeclasses.Instance;
 import com.github.tonivade.purefun.typeclasses.Monoid;
 
 @HigherKind
@@ -68,13 +67,13 @@ public final class PureCFG<T> implements PureCFGOf<T> {
   public T unsafeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new IdVisitor(Key.empty(), source)),
-        IdInstances.applicative()).fix(toId()).get();
+        Instance.applicative(Id_.class)).fix(toId()).get();
   }
 
   public Option<T> safeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new OptionVisitor(Key.empty(), source)),
-        OptionInstances.applicative()).fix(toOption());
+        Instance.applicative(Option_.class)).fix(toOption());
   }
 
   public Validation<Validation.Result<String>, T> validatedRun(Source source) {
@@ -227,21 +226,21 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return SequenceInstances.traverse()
-          .sequence(IdInstances.applicative(), readAll(value))
+      return Instance.traverse(Sequence_.class)
+          .sequence(Instance.applicative(Id_.class), readAll(value))
           .fix(toId()).map(s -> s.fix(SequenceOf::narrowK));
     }
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      return SequenceInstances.traverse()
-          .sequence(IdInstances.applicative(), readAll(value))
+      return Instance.traverse(Sequence_.class)
+          .sequence(Instance.applicative(Id_.class), readAll(value))
           .fix(toId()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Id<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), IdInstances.applicative()).fix(toId());
+      return value.next().foldMap(nestedInterpreter(value), Instance.applicative(Id_.class)).fix(toId());
     }
 
     private <A> Interpreter<Id_> nestedInterpreter(DSL.ReadConfig<A> value) {
@@ -277,21 +276,21 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return SequenceInstances.traverse()
-          .sequence(OptionInstances.applicative(), readAll(value))
+      return Instance.traverse(Sequence_.class)
+          .sequence(Instance.applicative(Option_.class), readAll(value))
           .fix(toOption()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      return SequenceInstances.traverse()
-          .sequence(OptionInstances.applicative(), readAll(value))
+      return Instance.traverse(Sequence_.class)
+          .sequence(Instance.applicative(Option_.class), readAll(value))
           .fix(toOption()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Option<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), OptionInstances.applicative()).fix(toOption());
+      return value.next().foldMap(nestedInterpreter(value), Instance.applicative(Option_.class)).fix(toOption());
     }
 
     private <A> Interpreter<Option_> nestedInterpreter(DSL.ReadConfig<A> value) {
@@ -328,14 +327,14 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return SequenceInstances.traverse()
+      return Instance.traverse(Sequence_.class)
           .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
           .fix(toValidation()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      return SequenceInstances.traverse()
+      return Instance.traverse(Sequence_.class)
           .sequence(ValidationInstances.applicative(Validation.Result::concat), readAll(value))
           .fix(toValidation()).map(s -> s.fix(toSequence()));
     }
