@@ -8,8 +8,8 @@ group = 'com.github.tonivade'
 archivesBaseName = 'purecfg'
 version = '0.3-SNAPSHOT'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 11
+targetCompatibility = 11
 
 buildscript {
   repositories {
@@ -38,14 +38,6 @@ repositories {
 test {
   useJUnitPlatform()
 }
-  
-compileJava {
-  options.release = 8
-}
-
-compileTestJava {
-  options.release = 8
-}
 
 dependencies {
   annotationProcessor 'com.github.tonivade:purefun-processor:2.2'
@@ -54,7 +46,7 @@ dependencies {
   implementation 'com.github.tonivade:purefun-effect:2.2'
   runtime 'com.github.tonivade:purefun-instances:2.2'
   implementation 'com.moandjiezana.toml:toml4j:0.7.2'
-  testImplementation 'com.github.tonivade:purecheck:0.1'
+  testImplementation 'com.github.tonivade:purecheck:0.2-SNAPSHOT'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
   testImplementation 'org.junit.platform:junit-platform-runner:1.7.0'
 }

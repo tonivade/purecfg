@@ -77,8 +77,7 @@ public final class PureCFG<T> implements PureCFGOf<T> {
   }
 
   public Validation<Validation.Result<String>, T> validatedRun(Source source) {
-    Instance<Kind<Validation_, Validation.Result<String>>> instance = 
-        new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+    var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
     Semigroup<Result<String>> semigroup = Validation.Result::concat;
     return value.foldMap(
         new Interpreter<>(new ValidationVisitor(Key.empty(), source)),
@@ -86,7 +85,7 @@ public final class PureCFG<T> implements PureCFGOf<T> {
   }
 
   public String describe() {
-    Instance<Kind<Const_, String>> instance = new Instance<Kind<Const_, String>>() {};
+    var instance = new Instance<Kind<Const_, String>>() {};
     return value.analyze(
         new Interpreter<>(new ConstVisitor(Key.empty())),
         instance.applicative(Monoid.string()));
@@ -331,8 +330,7 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      Instance<Kind<Validation_, Validation.Result<String>>> instance = 
-          new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
       Semigroup<Result<String>> semigroup = Validation.Result::concat;
       return Instance.traverse(Sequence_.class)
           .sequence(instance.applicative(semigroup), readAll(value))
@@ -341,8 +339,7 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      Instance<Kind<Validation_, Validation.Result<String>>> instance = 
-          new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
       Semigroup<Result<String>> semigroup = Validation.Result::concat;
       return Instance.traverse(Sequence_.class)
           .sequence(instance.applicative(semigroup), readAll(value))
@@ -351,8 +348,7 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <A> Validation<Validation.Result<String>, A> visit(DSL.ReadConfig<A> value) {
-      Instance<Kind<Validation_, Validation.Result<String>>> instance = 
-          new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
       Semigroup<Result<String>> semigroup = Validation.Result::concat;
       return value.next().foldMap(nestedInterpreter(value), instance.applicative(semigroup))
           .fix(toValidation());
@@ -411,7 +407,7 @@ public final class PureCFG<T> implements PureCFGOf<T> {
 
     @Override
     public <A> Const<String, A> visit(DSL.ReadConfig<A> value) {
-      Instance<Kind<Const_, String>> instance = new Instance<Kind<Const_, String>>() {};
+      var instance = new Instance<Kind<Const_, String>>() {};
       return value.next().foldMap(
           nestedInterpreter(value), instance.applicative(Monoid.string())).fix(toConst());
     }
