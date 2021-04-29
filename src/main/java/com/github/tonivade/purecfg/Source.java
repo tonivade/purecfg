@@ -4,9 +4,9 @@
  */
 package com.github.tonivade.purecfg;
 
+import static com.github.tonivade.purefun.Precondition.checkNonNull;
 import static com.github.tonivade.purefun.data.ImmutableArray.toImmutableArray;
 import static java.lang.Boolean.TRUE;
-import static java.util.Objects.requireNonNull;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
@@ -143,13 +143,13 @@ public interface Source {
     private final Properties properties;
 
     public PropertiesSource(Properties properties) {
-      this.properties = requireNonNull(properties);
+      this.properties = checkNonNull(properties);
     }
 
     public static Properties read(String file) {
       try {
         Properties properties = new Properties();
-        properties.load(requireNonNull(PropertiesSource.class.getClassLoader().getResourceAsStream(file)));
+        properties.load(checkNonNull(PropertiesSource.class.getClassLoader().getResourceAsStream(file)));
         return properties;
       } catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -224,11 +224,11 @@ public interface Source {
     private final Toml toml;
 
     public TomlSource(Toml toml) {
-      this.toml = requireNonNull(toml);
+      this.toml = checkNonNull(toml);
     }
 
     public static Toml read(String file) {
-      return new Toml().read(requireNonNull(TomlSource.class.getClassLoader().getResourceAsStream(file)));
+      return new Toml().read(checkNonNull(TomlSource.class.getClassLoader().getResourceAsStream(file)));
     }
 
     @Override

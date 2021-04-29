@@ -4,7 +4,7 @@
  */
 package com.github.tonivade.purecfg;
 
-import static java.util.Objects.requireNonNull;
+import static com.github.tonivade.purefun.Precondition.checkNonNull;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.Witness;
@@ -54,7 +54,7 @@ public interface DSL<T> extends DSLOf<T> {
 
     protected Pure(String key, T value) {
       super(key);
-      this.value = requireNonNull(value);
+      this.value = checkNonNull(value);
     }
 
     public T get() {
@@ -128,7 +128,7 @@ public interface DSL<T> extends DSLOf<T> {
 
     protected ReadIterable(String key, PureCFG<? extends T> next) {
       super(key);
-      this.next = requireNonNull(next);
+      this.next = checkNonNull(next);
     }
 
     public PureCFG<T> next() {
@@ -147,7 +147,7 @@ public interface DSL<T> extends DSLOf<T> {
 
     protected ReadConfig(String key, PureCFG<? extends T> next) {
       super(key);
-      this.next = requireNonNull(next);
+      this.next = checkNonNull(next);
     }
 
     public PureCFG<T> next() {
