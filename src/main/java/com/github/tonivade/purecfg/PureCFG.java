@@ -11,6 +11,7 @@ import static com.github.tonivade.purefun.type.IdOf.toId;
 import static com.github.tonivade.purefun.type.OptionOf.toOption;
 import static com.github.tonivade.purefun.type.ValidationOf.toValidation;
 
+import com.github.tonivade.purefun.Applicable;
 import com.github.tonivade.purefun.Function1;
 import com.github.tonivade.purefun.Function2;
 import com.github.tonivade.purefun.Function3;
@@ -40,7 +41,7 @@ import com.github.tonivade.purefun.typeclasses.Monoid;
 import com.github.tonivade.purefun.typeclasses.Semigroup;
 
 @HigherKind
-public final class PureCFG<T> implements PureCFGOf<T> {
+public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
   private final FreeAp<DSL_, T> value;
 
@@ -52,12 +53,14 @@ public final class PureCFG<T> implements PureCFGOf<T> {
     this.value = checkNonNull(value);
   }
 
+  @Override
   public <R> PureCFG<R> map(Function1<? super T, ? extends R> mapper) {
     return new PureCFG<>(value.map(mapper));
   }
 
-  public <R> PureCFG<R> ap(PureCFG<Function1<? super T, ? extends R>> apply) {
-    return new PureCFG<>(value.ap(apply.value));
+  @Override
+  public <R> PureCFG<R> ap(Kind<PureCFG_, Function1<? super T, ? extends R>> apply) {
+    return new PureCFG<>(value.ap(apply.fix(PureCFGOf::narrowK).value));
   }
 
   protected <G extends Witness> Kind<G, T> foldMap(FunctionK<DSL_, G> functionK, Applicative<G> applicative) {
