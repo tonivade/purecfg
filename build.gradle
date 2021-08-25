@@ -1,26 +1,25 @@
-apply plugin: 'java'
-apply plugin: 'java-library'
-apply plugin: 'jacoco'
-apply plugin: 'com.bmuschko.nexus'
+plugins {
+  id 'java-library'
+  id 'jacoco'
+  id 'maven-publish'
+  id 'signing'
+  id "com.diffplug.oomph.ide" version "3.31.0"
+  id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
+}
+
 apply plugin: 'com.diffplug.eclipse.apt'
 
 group = 'com.github.tonivade'
-archivesBaseName = 'purecfg'
 version = '0.3-SNAPSHOT'
 
 sourceCompatibility = 11
 targetCompatibility = 11
 
-buildscript {
-  repositories {
-    mavenCentral()
-    jcenter()
-  }
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-  dependencies {
-    classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
-    classpath 'com.diffplug.gradle:goomph:3.31.0'
-  }
+java {
+  withJavadocJar()
+  withSourcesJar()
 }
 
 jacoco {
@@ -44,52 +43,75 @@ dependencies {
   api 'com.github.tonivade:purefun-free:2.3-SNAPSHOT'
   implementation 'com.github.tonivade:purefun-monad:2.3-SNAPSHOT'
   implementation 'com.github.tonivade:purefun-effect:2.3-SNAPSHOT'
-  runtime 'com.github.tonivade:purefun-instances:2.2'
+  runtimeOnly 'com.github.tonivade:purefun-instances:2.2'
   implementation 'com.moandjiezana.toml:toml4j:0.7.2'
   testImplementation 'com.github.tonivade:purecheck:0.2-SNAPSHOT'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
   testImplementation 'org.junit.platform:junit-platform-runner:1.7.2'
 }
 
-modifyPom {
-  project {
-    name 'PureDBC'
-    description 'Pure Functional Configuration Library'
-    url 'https://github.com/tonivade/purecfg'
-    inceptionYear '2020'
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      
+      from components.java
 
-    scm {
-      url 'https://github.com/tonivade/purecfg'
-      connection 'scm:https://github.com/tonivade/purecfg.git'
-      developerConnection 'scm:git://github.com/tonivade/purecfg.git'
-    }
+      pom {
+        name = 'PureDBC'
+        description = 'Pure Functional Configuration Library'
+        url = 'https://github.com/tonivade/purecfg'
+        inceptionYear = '2020'
 
-    licenses {
-      license {
-        name 'The MIT License (MIT)'
-        url 'https://github.com/tonivade/purecfg/blob/master/LICENSE'
-        distribution 'repo'
-      }
-    }
+        scm {
+          url = 'https://github.com/tonivade/purecfg'
+          connection = 'scm:https://github.com/tonivade/purecfg.git'
+          developerConnection = 'scm:git://github.com/tonivade/purecfg.git'
+        }
 
-    developers {
-      developer {
-        id 'tonivade'
-        name 'Antonio Muñoz'
-        email 'antoniogmc@gmail.com'
+        licenses {
+          license {
+            name = 'The MIT License (MIT)'
+            url = 'https://github.com/tonivade/purecfg/blob/master/LICENSE'
+            distribution = 'repo'
+          }
+        }
+
+        developers {
+          developer {
+            id = 'tonivade'
+            name = 'Antonio Muñoz'
+            email = 'antoniogmc@gmail.com'
+          }
+        }
       }
     }
   }
 }
 
-extraArchive {
-  sources = true
-  tests = false
-  javadoc = true
+signing {
+  sign publishing.publications.mavenJava
 }
 
-nexus {
-  sign = true
-  repositoryUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-  snapshotRepositoryUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
+tasks.withType(Sign) {
+  onlyIf { isReleaseVersion }
+}
+
+nexusPublishing {
+  repositories {
+    sonatype {
+      
+      stagingProfileId = '19a96b937cdb5'
+      
+      username = project.findProperty('nexusUsername')  
+      password = project.findProperty('nexusPassword')
+    }
+  }
+  
+  clientTimeout = Duration.ofSeconds(300)
+  connectTimeout = Duration.ofSeconds(60)
+
+  transitionCheckOptions {
+    maxRetries.set(40)
+    delayBetween.set(java.time.Duration.ofMillis(3000))
+  }
 }
