@@ -10,17 +10,12 @@ plugins {
 apply plugin: 'com.diffplug.eclipse.apt'
 
 group = 'com.github.tonivade'
-version = '0.3-SNAPSHOT'
+version = '0.3'
 
 sourceCompatibility = 11
 targetCompatibility = 11
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
-
-java {
-  withJavadocJar()
-  withSourcesJar()
-}
 
 jacoco {
   toolVersion = '0.8.5'
@@ -34,6 +29,11 @@ repositories {
   }
 }
 
+java {
+  withJavadocJar()
+  withSourcesJar()
+}
+
 test {
   useJUnitPlatform()
 }
@@ -45,7 +45,7 @@ dependencies {
   implementation 'com.github.tonivade:purefun-effect:3.0'
   runtimeOnly 'com.github.tonivade:purefun-instances:2.2'
   implementation 'com.moandjiezana.toml:toml4j:0.7.2'
-  testImplementation 'com.github.tonivade:purecheck:0.2-SNAPSHOT'
+  testImplementation 'com.github.tonivade:purecheck:0.2'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
   testImplementation 'org.junit.platform:junit-platform-runner:1.7.2'
 }
