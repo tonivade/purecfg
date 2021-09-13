@@ -43,7 +43,7 @@ dependencies {
   api 'com.github.tonivade:purefun-free:3.0'
   implementation 'com.github.tonivade:purefun-monad:3.0'
   implementation 'com.github.tonivade:purefun-effect:3.0'
-  runtimeOnly 'com.github.tonivade:purefun-instances:2.2'
+  runtimeOnly 'com.github.tonivade:purefun-instances:3.0'
   implementation 'com.moandjiezana.toml:toml4j:0.7.2'
   testImplementation 'com.github.tonivade:purecheck:0.2'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.0'
