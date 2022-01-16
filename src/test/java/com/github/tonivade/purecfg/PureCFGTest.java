@@ -81,7 +81,7 @@ class PureCFGTest extends IOTestSpec<String> {
     Option<Iterable<String>> option = iterable.safeRun(Source.from(properties));
 
     assertAll(
-        () -> assertEquals(listOf("a", "b", "c"), option.get()),
+        () -> assertEquals(listOf("a", "b", "c"), option.getOrElseThrow()),
         () -> assertEquals("- list: String[]\n", iterable.describe())
     );
   }
@@ -95,7 +95,7 @@ class PureCFGTest extends IOTestSpec<String> {
     Option<Iterable<String>> option = iterable.safeRun(Source.from(toml));
 
     assertAll(
-        () -> assertEquals(listOf("a", "b", "c"), option.get()),
+        () -> assertEquals(listOf("a", "b", "c"), option.getOrElseThrow()),
         () -> assertEquals("- list: String[]\n", iterable.describe())
     );
   }
@@ -195,7 +195,7 @@ class PureCFGTest extends IOTestSpec<String> {
         it.should("read config form " + source)
           .given(source)
           .when(program::safeRun)
-          .thenMustBe(equalsTo(expectedConfig).compose(Option::get)),
+          .thenMustBe(equalsTo(expectedConfig).compose(Option::getOrElseThrow)),
 
         it.should("read config form " + source)
           .given(source)

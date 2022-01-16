@@ -138,11 +138,11 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
   }
 
   public static <T> PureCFG<Iterable<T>> readIterable(String key, PureCFG<? extends T> item) {
-    return new PureCFG<>(new DSL.ReadIterable<>(key, item));
+    return new PureCFG<>(new DSL.ReadIterable<>(key, PureCFGOf.narrowK(item)));
   }
 
   public static <T> PureCFG<T> readConfig(String key, PureCFG<? extends T> cfg) {
-    return new PureCFG<>(new DSL.ReadConfig<>(key, cfg));
+    return new PureCFG<>(new DSL.ReadConfig<>(key, PureCFGOf.narrowK(cfg)));
   }
 
   public static Applicative<PureCFG_> applicative() {
