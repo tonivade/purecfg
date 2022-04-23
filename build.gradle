@@ -53,11 +53,11 @@ test {
 }
 
 dependencies {
-  annotationProcessor 'com.github.tonivade:purefun-processor:3.1-SNAPSHOT'
-  api 'com.github.tonivade:purefun-free:3.1-SNAPSHOT'
-  implementation 'com.github.tonivade:purefun-monad:3.1-SNAPSHOT'
-  implementation 'com.github.tonivade:purefun-effect:3.1-SNAPSHOT'
-  runtimeOnly 'com.github.tonivade:purefun-instances:3.1-SNAPSHOT'
+  annotationProcessor 'com.github.tonivade:purefun-processor:3.99.0-SNAPSHOT'
+  api 'com.github.tonivade:purefun-free:3.99.0-SNAPSHOT'
+  implementation 'com.github.tonivade:purefun-monad:3.99.0-SNAPSHOT'
+  implementation 'com.github.tonivade:purefun-effect:3.99.0-SNAPSHOT'
+  runtimeOnly 'com.github.tonivade:purefun-instances:3.99.0-SNAPSHOT'
   implementation 'com.moandjiezana.toml:toml4j:0.7.2'
   testImplementation 'com.github.tonivade:purecheck:0.3-SNAPSHOT'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
