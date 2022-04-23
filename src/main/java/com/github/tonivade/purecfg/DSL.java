@@ -4,14 +4,15 @@
  */
 package com.github.tonivade.purecfg;
 
+import static com.github.tonivade.purefun.Precondition.checkNonEmpty;
 import static com.github.tonivade.purefun.Precondition.checkNonNull;
+
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.Witness;
-import com.github.tonivade.purefun.data.NonEmptyString;
 
-@HigherKind(sealed = true)
-public interface DSL<T> extends DSLOf<T> {
+@HigherKind
+public sealed interface DSL<T> extends DSLOf<T> {
 
   String key();
 
@@ -34,27 +35,11 @@ public interface DSL<T> extends DSLOf<T> {
     <T> Kind<F, T> visit(ReadConfig<T> value);
   }
 
-  abstract class AbstractRead<T> implements SealedDSL<T> {
+  record Pure<T>(String key, T value) implements DSL<T> {
 
-    private final NonEmptyString key;
-
-    private AbstractRead(String key) {
-      this.key = NonEmptyString.of(key);
-    }
-
-    @Override
-    public String key() {
-      return key.get();
-    }
-  }
-
-  final class Pure<T> extends AbstractRead<T> {
-
-    private final T value;
-
-    protected Pure(String key, T value) {
-      super(key);
-      this.value = checkNonNull(value);
+    public Pure {
+      checkNonEmpty(key);
+      checkNonNull(value);
     }
 
     public T get() {
@@ -67,10 +52,10 @@ public interface DSL<T> extends DSLOf<T> {
     }
   }
 
-  final class ReadInt extends AbstractRead<Integer> {
+  record ReadInt(String key) implements DSL<Integer> {
 
-    protected ReadInt(String key) {
-      super(key);
+    public ReadInt {
+      checkNonEmpty(key);
     }
 
     @Override
@@ -79,10 +64,10 @@ public interface DSL<T> extends DSLOf<T> {
     }
   }
 
-  final class ReadString extends AbstractRead<String> {
+  record ReadString(String key) implements DSL<String> {
 
-    protected ReadString(String key) {
-      super(key);
+    public ReadString {
+      checkNonEmpty(key);
     }
 
     @Override
@@ -91,10 +76,10 @@ public interface DSL<T> extends DSLOf<T> {
     }
   }
 
-  final class ReadBoolean extends AbstractRead<Boolean> {
+  record ReadBoolean(String key) implements DSL<Boolean> {
 
-    protected ReadBoolean(String key) {
-      super(key);
+    public ReadBoolean {
+      checkNonEmpty(key);
     }
 
     @Override
@@ -103,17 +88,11 @@ public interface DSL<T> extends DSLOf<T> {
     }
   }
 
-  final class ReadPrimitiveIterable<T> extends AbstractRead<Iterable<T>> {
+  record ReadPrimitiveIterable<T>(String key, Class<T> type) implements DSL<Iterable<T>> {
 
-    private final Class<T> type;
-
-    public ReadPrimitiveIterable(String key, Class<T> type) {
-      super(key);
-      this.type = type;
-    }
-
-    public Class<T> type() {
-      return type;
+    public ReadPrimitiveIterable {
+      checkNonEmpty(key);
+      checkNonNull(type);
     }
 
     @Override
@@ -122,17 +101,11 @@ public interface DSL<T> extends DSLOf<T> {
     }
   }
 
-  final class ReadIterable<T> extends AbstractRead<Iterable<T>> {
+  record ReadIterable<T>(String key, PureCFG<T> next) implements DSL<Iterable<T>> {
 
-    private final PureCFG<? extends T> next;
-
-    protected ReadIterable(String key, PureCFG<? extends T> next) {
-      super(key);
-      this.next = checkNonNull(next);
-    }
-
-    public PureCFG<T> next() {
-      return PureCFGOf.narrowK(next);
+    public ReadIterable {
+      checkNonEmpty(key);
+      checkNonNull(next);
     }
 
     @Override
@@ -141,17 +114,11 @@ public interface DSL<T> extends DSLOf<T> {
     }
   }
 
-  final class ReadConfig<T> extends AbstractRead<T> {
+  record ReadConfig<T>(String key, PureCFG<T> next) implements DSL<T> {
 
-    private final PureCFG<? extends T> next;
-
-    protected ReadConfig(String key, PureCFG<? extends T> next) {
-      super(key);
-      this.next = checkNonNull(next);
-    }
-
-    public PureCFG<T> next() {
-      return PureCFGOf.narrowK(next);
+    public ReadConfig {
+      checkNonNull(key);
+      checkNonNull(next);
     }
 
     @Override
