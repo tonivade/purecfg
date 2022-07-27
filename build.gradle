@@ -61,7 +61,7 @@ dependencies {
   implementation 'com.moandjiezana.toml:toml4j:0.7.2'
   testImplementation 'com.github.tonivade:purecheck:0.3'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-  testImplementation 'org.junit.platform:junit-platform-runner:1.8.2'
+  testImplementation 'org.junit.platform:junit-platform-runner:1.9.0'
 }
 
 publishing {
