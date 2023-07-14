@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import org.tomlj.Toml;
 import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
+import org.tomlj.TomlTable;
 
 public interface Source {
 
@@ -235,29 +236,29 @@ public interface Source {
 
     @Override
     public Option<String> getString(String key) {
-      return Try.of(() -> toml.getString(key)).toOption();
+      return Try.of(() -> TomlSource.<String>readValue(toml, key)).toOption();
     }
 
     @Override
     public Option<Integer> getInteger(String key) {
-      return Try.of(() -> toml.getLong(key).intValue()).toOption();
+      return Try.of(() -> TomlSource.<Long>readValue(toml, key).intValue()).toOption();
     }
 
     @Override
     public Option<Boolean> getBoolean(String key) {
-      return Try.of(() -> toml.getBoolean(key)).toOption();
+      return Try.of(() -> TomlSource.<Boolean>readValue(toml, key)).toOption();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> Iterable<DSL<T>> getIterable(String key, Class<T> type) {
-      TomlArray list = toml.getArrayOrEmpty(key);
-      if (list.isEmpty()) {
+      TomlArray array = toml.getArrayOrEmpty(key);
+      if (array.isEmpty()) {
         return ImmutableArray.empty();
       }
       List<DSL<T>> result = new ArrayList<>();
-      for (int i = 0; i < list.size(); i++) {
-        var item = (T) list.get(i);
+      for (int i = 0; i < array.size(); i++) {
+        var item = (T) array.get(i);
         result.add(new DSL.Pure<T>(key, item));
       }
       return ImmutableArray.from(result);
@@ -265,15 +266,28 @@ public interface Source {
 
     @Override
     public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
-      TomlArray list = toml.getArrayOrEmpty(key);
-      if (list.isEmpty()) {
+      TomlArray array = toml.getArrayOrEmpty(key);
+      if (array.isEmpty()) {
         return ImmutableArray.empty();
       }
       List<DSL<T>> result = new ArrayList<>();
-      for (int i = 0; i < list.size(); i++) {
-        result.add(new DSL.ReadConfig<T>(key + "[" + i + "]", next));
+      for (int i = 0; i < array.size(); i++) {
+        result.add(new DSL.ReadConfig<T>(key + "." + i, next));
       }
       return ImmutableArray.from(result);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T readValue(TomlParseResult toml, String key) {
+      Object current = toml;
+      for (String item : key.split("\\.")) {
+        if (current instanceof TomlTable table) {
+          current = table.get(item);
+        } else if (current instanceof TomlArray array) {
+          current = array.get(Integer.parseInt(item));
+        }
+      }
+      return (T) current;
     }
   }
 }
