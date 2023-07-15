@@ -56,7 +56,7 @@ dependencies {
   implementation 'com.github.tonivade:purefun-monad:4.1-SNAPSHOT'
   implementation 'com.github.tonivade:purefun-effect:4.1-SNAPSHOT'
   runtimeOnly 'com.github.tonivade:purefun-instances:4.1-SNAPSHOT'
-  implementation 'com.moandjiezana.toml:toml4j:0.7.2'
+  implementation 'org.tomlj:tomlj:1.1.0'
   testImplementation 'com.github.tonivade:purecheck:0.4-SNAPSHOT'
   testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
   testImplementation 'org.junit.platform:junit-platform-runner:1.9.3'

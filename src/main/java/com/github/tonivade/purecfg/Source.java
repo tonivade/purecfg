@@ -7,18 +7,21 @@ package com.github.tonivade.purecfg;
 import static com.github.tonivade.purefun.Precondition.checkNonNull;
 import static com.github.tonivade.purefun.data.ImmutableArray.toImmutableArray;
 import static java.lang.Boolean.TRUE;
+import com.github.tonivade.purefun.data.ImmutableArray;
+import com.github.tonivade.purefun.type.Option;
+import com.github.tonivade.purefun.type.Try;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import com.github.tonivade.purefun.Tuple2;
-import com.github.tonivade.purefun.data.ImmutableArray;
-import com.github.tonivade.purefun.type.Option;
-import com.github.tonivade.purefun.type.Try;
-import com.moandjiezana.toml.Toml;
+import org.tomlj.Toml;
+import org.tomlj.TomlArray;
+import org.tomlj.TomlParseResult;
+import org.tomlj.TomlTable;
 
 public interface Source {
 
@@ -134,7 +137,7 @@ public interface Source {
     return new PropertiesSource(properties);
   }
 
-  static Source from(Toml toml) {
+  static Source from(TomlParseResult toml) {
     return new TomlSource(toml);
   }
 
@@ -178,7 +181,7 @@ public interface Source {
 
     @Override
     public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
-      return iterableKeys(key).map(k -> new DSL.ReadConfig<>(k, next)).collect(toImmutableArray());
+      return iterableKeys(key).map(k -> new DSL.ReadConfig<T>(k, next)).collect(toImmutableArray());
     }
 
     private Stream<String> iterableKeys(String key) {
@@ -192,16 +195,12 @@ public interface Source {
 
     @SuppressWarnings("unchecked")
     private <T> DSL<T> readKey(String key, Class<T> type) {
-      switch (type.getSimpleName()) {
-        case "String":
-          return (DSL<T>) new DSL.ReadString(key);
-        case "Integer":
-          return (DSL<T>) new DSL.ReadInt(key);
-        case "Boolean":
-          return (DSL<T>) new DSL.ReadBoolean(key);
-        default:
-          throw new UnsupportedOperationException("this class is not supported: " + type.getName());
-      }
+      return switch (type.getSimpleName()) {
+        case "String" -> (DSL<T>) new DSL.ReadString(key);
+        case "Integer" -> (DSL<T>) new DSL.ReadInt(key);
+        case "Boolean" -> (DSL<T>) new DSL.ReadBoolean(key);
+        default -> throw new UnsupportedOperationException("this class is not supported: " + type.getName());
+      };
     }
 
     private Option<String> readString(String key) {
@@ -221,46 +220,74 @@ public interface Source {
 
   final class TomlSource implements Source {
 
-    private final Toml toml;
+    private final TomlParseResult toml;
 
-    public TomlSource(Toml toml) {
+    public TomlSource(TomlParseResult toml) {
       this.toml = checkNonNull(toml);
     }
 
-    public static Toml read(String file) {
-      return new Toml().read(checkNonNull(TomlSource.class.getClassLoader().getResourceAsStream(file)));
+    public static TomlParseResult read(String file) {
+      try {
+        return Toml.parse(checkNonNull(TomlSource.class.getClassLoader().getResourceAsStream(file)));
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
     }
 
     @Override
     public Option<String> getString(String key) {
-      return Try.of(() -> toml.getString(key)).toOption();
+      return Try.of(() -> TomlSource.<String>readValue(toml, key)).toOption();
     }
 
     @Override
     public Option<Integer> getInteger(String key) {
-      return Try.of(() -> toml.getLong(key).intValue()).toOption();
+      return Try.of(() -> TomlSource.<Long>readValue(toml, key).intValue()).toOption();
     }
 
     @Override
     public Option<Boolean> getBoolean(String key) {
-      return Try.of(() -> toml.getBoolean(key)).toOption();
+      return Try.of(() -> TomlSource.<Boolean>readValue(toml, key)).toOption();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> Iterable<DSL<T>> getIterable(String key, Class<T> type) {
-      List<Object> list = toml.getList(key);
-      if (list.get(0) instanceof Toml) {
+      TomlArray array = toml.getArrayOrEmpty(key);
+      if (array.isEmpty()) {
         return ImmutableArray.empty();
       }
-      return list.stream().map(it -> new DSL.Pure<>(key, (T) it)).collect(toImmutableArray());
+      List<DSL<T>> result = new ArrayList<>();
+      for (int i = 0; i < array.size(); i++) {
+        var item = (T) array.get(i);
+        result.add(new DSL.Pure<T>(key, item));
+      }
+      return ImmutableArray.from(result);
     }
 
     @Override
     public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
-      List<Toml> list = toml.getTables(key);
-      Stream<Integer> integerStream = ImmutableArray.from(list).zipWithIndex().map(Tuple2::get1);
-      return integerStream.map(i -> new DSL.ReadConfig<>(key + "[" + i + "]", next)).collect(toImmutableArray());
+      TomlArray array = toml.getArrayOrEmpty(key);
+      if (array.isEmpty()) {
+        return ImmutableArray.empty();
+      }
+      List<DSL<T>> result = new ArrayList<>();
+      for (int i = 0; i < array.size(); i++) {
+        result.add(new DSL.ReadConfig<T>(key + "." + i, next));
+      }
+      return ImmutableArray.from(result);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T readValue(TomlParseResult toml, String key) {
+      Object current = toml;
+      for (String item : key.split("\\.")) {
+        if (current instanceof TomlTable table) {
+          current = table.get(item);
+        } else if (current instanceof TomlArray array) {
+          current = array.get(Integer.parseInt(item));
+        }
+      }
+      return (T) current;
     }
   }
 }

@@ -15,13 +15,6 @@ import static com.github.tonivade.purefun.data.Sequence.listOf;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Properties;
-
-import org.junit.jupiter.api.Test;
-
 import com.github.tonivade.purecheck.TestSuite;
 import com.github.tonivade.purecheck.spec.IOTestSpec;
 import com.github.tonivade.purefun.Tuple;
@@ -30,7 +23,11 @@ import com.github.tonivade.purefun.data.ImmutableList;
 import com.github.tonivade.purefun.monad.IO_;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
-import com.moandjiezana.toml.Toml;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Properties;
+import org.junit.jupiter.api.Test;
+import org.tomlj.Toml;
 
 class PureCFGTest extends IOTestSpec<String> {
 
@@ -53,7 +50,7 @@ class PureCFGTest extends IOTestSpec<String> {
 
   @Test
   void runToml() {
-    Toml toml = new Toml().read(
+    var toml = Toml.parse(
         "[server]\n"
         + "  host = \"localhost\"\n"
         + "  port = 8080\n"
@@ -90,7 +87,7 @@ class PureCFGTest extends IOTestSpec<String> {
   void iterableToml() {
     PureCFG<Iterable<String>> iterable = readIterable("list", String.class);
 
-    Toml toml = new Toml().read("list = [ \"a\", \"b\", \"c\" ]");
+    var toml = Toml.parse("list = [ \"a\", \"b\", \"c\" ]");
 
     Option<Iterable<String>> option = iterable.safeRun(Source.from(toml));
 
@@ -122,7 +119,7 @@ class PureCFGTest extends IOTestSpec<String> {
         "[[user]]\n  name = \"b\"\npass = \"b\"\n" +
         "[[user]]\n  name = \"c\"\npass = \"c\"\n";
 
-    Option<Iterable<User>> option = readUsers().safeRun(from(new Toml().read(source)));
+    Option<Iterable<User>> option = readUsers().safeRun(from(Toml.parse(source)));
 
     assertEquals(Option.some(expectedUsers), option);
   }
@@ -139,7 +136,7 @@ class PureCFGTest extends IOTestSpec<String> {
   void errorToml() {
     PureCFG<Config> cfg = readConfig();
 
-    Toml toml = new Toml();
+    var toml = Toml.parse("");
     Source source = Source.from(toml);
 
     assertAll(
@@ -185,8 +182,8 @@ class PureCFGTest extends IOTestSpec<String> {
   }
 
   private TestSuite<IO_, String> test(PureCFG<Config> program, Source source) {
-    return suite("PureCFG", 
-        
+    return suite("PureCFG",
+
         it.should("read config from " + source)
           .given(source)
           .when(program::unsafeRun)
@@ -201,7 +198,7 @@ class PureCFGTest extends IOTestSpec<String> {
           .given(source)
           .when(program::validatedRun)
           .then(equalsTo(expectedConfig).compose(Validation::get))
-          
+
         );
   }
 
