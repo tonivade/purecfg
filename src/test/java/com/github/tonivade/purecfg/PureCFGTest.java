@@ -15,6 +15,14 @@ import static com.github.tonivade.purefun.data.Sequence.listOf;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Properties;
+
+import org.junit.jupiter.api.Test;
+import org.tomlj.Toml;
+
 import com.github.tonivade.purecheck.TestSuite;
 import com.github.tonivade.purecheck.spec.IOTestSpec;
 import com.github.tonivade.purefun.Tuple;
@@ -23,11 +31,6 @@ import com.github.tonivade.purefun.data.ImmutableList;
 import com.github.tonivade.purefun.monad.IO_;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Properties;
-import org.junit.jupiter.api.Test;
-import org.tomlj.Toml;
 
 class PureCFGTest extends IOTestSpec<String> {
 
@@ -51,10 +54,12 @@ class PureCFGTest extends IOTestSpec<String> {
   @Test
   void runToml() {
     var toml = Toml.parse(
-        "[server]\n"
-        + "  host = \"localhost\"\n"
-        + "  port = 8080\n"
-        + "  active = true");
+        """
+        [server]
+          host = "localhost"
+          port = 8080
+          active = true
+        """);
 
     test(readConfig(), Source.from(toml)).run().assertion();
   }
@@ -115,9 +120,17 @@ class PureCFGTest extends IOTestSpec<String> {
   @Test
   void iterableOfToml() {
     String source =
-        "[[user]]\n  name = \"a\"\npass = \"a\"\n" +
-        "[[user]]\n  name = \"b\"\npass = \"b\"\n" +
-        "[[user]]\n  name = \"c\"\npass = \"c\"\n";
+        """
+        [[user]]
+           name = "a"
+           pass = "a"
+        [[user]]
+           name = "b"
+           pass = "b"
+        [[user]]
+           name = "c"
+           pass = "c"
+        """;
 
     Option<Iterable<User>> option = readUsers().safeRun(from(Toml.parse(source)));
 
