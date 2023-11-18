@@ -1,8 +1,8 @@
 [versions]
-purefunVersion = "4.2-SNAPSHOT"
+purefunVersion = "5.0-SNAPSHOT"
 junitEngineVersion = "5.10.1"
 junitPlatformVersion = "1.10.1"
-purecheckVersion = "0.5-SNAPSHOT"
+purecheckVersion = "0.6-SNAPSHOT"
 versionsVersion = "0.49.0"
 nexusVersion = "1.3.0"
 tomljVersion = "1.1.0"

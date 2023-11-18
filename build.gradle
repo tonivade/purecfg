@@ -8,7 +8,7 @@ plugins {
 }
 
 group = 'com.github.tonivade'
-version = '0.6-SNAPSHOT'
+version = '0.7-SNAPSHOT'
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
@@ -48,6 +48,12 @@ test {
   useJUnitPlatform()
 
   reports.html.required = false
+}
+
+javadoc {
+  modularity.inferModulePath = false
+  
+  exclude "module-info.java"
 }
 
 dependencies {
