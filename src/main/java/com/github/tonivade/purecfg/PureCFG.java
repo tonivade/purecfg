@@ -46,11 +46,11 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
   private final FreeAp<DSL_, T> value;
 
-  protected PureCFG(DSL<T> value) {
+  private PureCFG(DSL<T> value) {
     this(FreeAp.lift(value));
   }
 
-  protected PureCFG(FreeAp<DSL_, T> value) {
+  private PureCFG(FreeAp<DSL_, T> value) {
     this.value = checkNonNull(value);
   }
 
@@ -64,7 +64,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     return new PureCFG<>(value.ap(apply.fix(PureCFGOf::narrowK).value));
   }
 
-  protected <G extends Witness> Kind<G, T> foldMap(FunctionK<DSL_, G> functionK, Applicative<G> applicative) {
+  private <G extends Witness> Kind<G, T> foldMap(FunctionK<DSL_, G> functionK, Applicative<G> applicative) {
     return value.foldMap(functionK, applicative);
   }
 

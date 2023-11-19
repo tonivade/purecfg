@@ -181,11 +181,11 @@ public interface Source {
 
     @Override
     public <T> Iterable<DSL<T>> getIterable(String key, PureCFG<T> next) {
-      return iterableKeys(key).map(k -> new DSL.ReadConfig<T>(k, next)).collect(toImmutableArray());
+      return iterableKeys(key).map(k -> new DSL.ReadConfig<>(k, next)).collect(toImmutableArray());
     }
 
     private Stream<String> iterableKeys(String key) {
-      String regex = "(" + key.replaceAll("\\.", "\\.") + "\\.\\d+).*";
+      String regex = "(" + key.replaceAll("\\.", ".") + "\\.\\d+).*";
       return properties.keySet().stream()
           .map(Object::toString)
           .flatMap(k -> getKey(k, regex))
@@ -259,7 +259,7 @@ public interface Source {
       List<DSL<T>> result = new ArrayList<>();
       for (int i = 0; i < array.size(); i++) {
         var item = (T) array.get(i);
-        result.add(new DSL.Pure<T>(key, item));
+        result.add(new DSL.Pure<>(key, item));
       }
       return ImmutableArray.from(result);
     }
@@ -272,7 +272,7 @@ public interface Source {
       }
       List<DSL<T>> result = new ArrayList<>();
       for (int i = 0; i < array.size(); i++) {
-        result.add(new DSL.ReadConfig<T>(key + "." + i, next));
+        result.add(new DSL.ReadConfig<>(key + "." + i, next));
       }
       return ImmutableArray.from(result);
     }
