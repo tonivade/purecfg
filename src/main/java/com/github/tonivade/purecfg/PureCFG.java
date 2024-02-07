@@ -71,7 +71,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
   public T unsafeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new IdVisitor(Key.empty(), source)),
-        Instances.applicative(Id_.class)).fix(toId()).get();
+        Instances.applicative(Id_.class)).fix(toId()).value();
   }
 
   public Option<T> safeRun(Source source) {
@@ -95,25 +95,25 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
         instance.applicative(Monoid.string()));
   }
 
-  public static <A, B, C> PureCFG<C> mapN(PureCFG<? extends A> fa, PureCFG<? extends B> fb, 
+  public static <A, B, C> PureCFG<C> mapN(PureCFG<? extends A> fa, PureCFG<? extends B> fb,
       Function2<? super A, ? super B, ? extends C> apply) {
     return fb.ap(fa.map(apply.curried()));
   }
 
   public static <A, B, C, D> PureCFG<D> mapN(
-      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, 
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc,
       Function3<? super A, ? super B, ? super C, ? extends D> apply) {
     return fc.ap(mapN(fa, fb, (a, b) -> apply.curried().apply(a).apply(b)));
   }
 
   public static <A, B, C, D, E> PureCFG<E> mapN(
-      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd, 
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd,
       Function4<? super A, ? super B, ? super C, ? super D, ? extends E> apply) {
     return fd.ap(mapN(fa, fb, fc, (a, b, c) -> apply.curried().apply(a).apply(b).apply(c)));
   }
 
   public static <A, B, C, D, E, F> PureCFG<F> mapN(
-      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd, PureCFG<? extends E> fe, 
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd, PureCFG<? extends E> fe,
       Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends F> apply) {
     return fe.ap(mapN(fa, fb, fc, fd, (a, b, c, d) -> apply.curried().apply(a).apply(b).apply(c).apply(d)));
   }
@@ -455,7 +455,7 @@ interface PureCFGApplicative extends Applicative<PureCFG_> {
   }
 
   @Override
-  default <T, R> PureCFG<R> ap(Kind<PureCFG_, ? extends T> value, 
+  default <T, R> PureCFG<R> ap(Kind<PureCFG_, ? extends T> value,
       Kind<PureCFG_, ? extends Function1<? super T, ? extends R>> apply) {
     return value.fix(PureCFGOf::<T>narrowK).ap(apply.fix(PureCFGOf::narrowK));
   }
