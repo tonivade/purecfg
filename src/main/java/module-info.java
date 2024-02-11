@@ -7,6 +7,6 @@ module com.github.tonivade.purecfg {
   requires com.github.tonivade.purefun.monad;
   requires com.github.tonivade.purefun.effect;
   requires transitive com.github.tonivade.purefun.typeclasses;
-  requires transitive org.tomlj;
+  requires org.tomlj;
   requires transitive java.compiler;
 }
