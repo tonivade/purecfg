@@ -4,7 +4,7 @@
  */
 package com.github.tonivade.purecfg;
 
-import static com.github.tonivade.purefun.Precondition.checkNonNull;
+import static com.github.tonivade.purefun.core.Precondition.checkNonNull;
 import static com.github.tonivade.purefun.data.ImmutableArray.toImmutableArray;
 import static java.lang.Boolean.TRUE;
 import com.github.tonivade.purefun.data.ImmutableArray;

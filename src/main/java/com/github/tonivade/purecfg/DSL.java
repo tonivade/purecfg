@@ -4,8 +4,8 @@
  */
 package com.github.tonivade.purecfg;
 
-import static com.github.tonivade.purefun.Precondition.checkNonEmpty;
-import static com.github.tonivade.purefun.Precondition.checkNonNull;
+import static com.github.tonivade.purefun.core.Precondition.checkNonEmpty;
+import static com.github.tonivade.purefun.core.Precondition.checkNonNull;
 
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;

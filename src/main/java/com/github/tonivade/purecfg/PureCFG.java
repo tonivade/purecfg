@@ -4,19 +4,19 @@
  */
 package com.github.tonivade.purecfg;
 
-import static com.github.tonivade.purefun.Precondition.checkNonNull;
+import static com.github.tonivade.purefun.core.Precondition.checkNonNull;
 import static com.github.tonivade.purefun.data.SequenceOf.toSequence;
 import static com.github.tonivade.purefun.type.ConstOf.toConst;
 import static com.github.tonivade.purefun.type.IdOf.toId;
 import static com.github.tonivade.purefun.type.OptionOf.toOption;
 import static com.github.tonivade.purefun.type.ValidationOf.toValidation;
 
-import com.github.tonivade.purefun.Applicable;
-import com.github.tonivade.purefun.Function1;
-import com.github.tonivade.purefun.Function2;
-import com.github.tonivade.purefun.Function3;
-import com.github.tonivade.purefun.Function4;
-import com.github.tonivade.purefun.Function5;
+import com.github.tonivade.purefun.core.Applicable;
+import com.github.tonivade.purefun.core.Function1;
+import com.github.tonivade.purefun.core.Function2;
+import com.github.tonivade.purefun.core.Function3;
+import com.github.tonivade.purefun.core.Function4;
+import com.github.tonivade.purefun.core.Function5;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.Witness;
