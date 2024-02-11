@@ -100,10 +100,19 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     return fb.ap(fa.map(apply.curried()));
   }
 
+  public static <A, B> Map2<A, B> mapN(PureCFG<? extends A> fa, PureCFG<? extends B> fb) {
+    return new Map2<>(fa, fb);
+  }
+
   public static <A, B, C, D> PureCFG<D> mapN(
       PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc,
       Function3<? super A, ? super B, ? super C, ? extends D> apply) {
     return fc.ap(mapN(fa, fb, (a, b) -> apply.curried().apply(a).apply(b)));
+  }
+
+  public static <A, B, C> Map3<A, B, C> mapN(
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc) {
+    return new Map3<>(fa, fb, fc);
   }
 
   public static <A, B, C, D, E> PureCFG<E> mapN(
@@ -112,10 +121,20 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     return fd.ap(mapN(fa, fb, fc, (a, b, c) -> apply.curried().apply(a).apply(b).apply(c)));
   }
 
+  public static <A, B, C, D> Map4<A, B, C, D> mapN(
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd) {
+    return new Map4<>(fa, fb, fc, fd);
+  }
+
   public static <A, B, C, D, E, F> PureCFG<F> mapN(
       PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd, PureCFG<? extends E> fe,
       Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends F> apply) {
     return fe.ap(mapN(fa, fb, fc, fd, (a, b, c, d) -> apply.curried().apply(a).apply(b).apply(c).apply(d)));
+  }
+
+  public static <A, B, C, D, E> Map5<A, B, C, D, E> mapN(
+      PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd, PureCFG<? extends E> fe) {
+    return new Map5<>(fa, fb, fc, fd, fe);
   }
 
   public static <T> PureCFG<T> pure(T value) {
@@ -441,6 +460,34 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
     static Key empty() {
       return DSL::key;
+    }
+  }
+
+  public static record Map2<A, B>(PureCFG<? extends A> fa, PureCFG<? extends B> fb) {
+
+    public <C> PureCFG<C> apply(Function2<? super A, ? super B, ? extends C> apply) {
+      return mapN(fa, fb, apply);
+    }
+  }
+
+  public static record Map3<A, B, C>(PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc) {
+
+    public <D> PureCFG<D> apply(Function3<? super A, ? super B, ? super C, ? extends D> apply) {
+      return mapN(fa, fb, fc, apply);
+    }
+  }
+
+  public static record Map4<A, B, C, D>(PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd) {
+
+    public <E> PureCFG<E> apply(Function4<? super A, ? super B, ? super C, ? super D, ? extends E> apply) {
+      return mapN(fa, fb, fc, fd, apply);
+    }
+  }
+
+  public static record Map5<A, B, C, D, E>(PureCFG<? extends A> fa, PureCFG<? extends B> fb, PureCFG<? extends C> fc, PureCFG<? extends D> fd, PureCFG<? extends E> fe) {
+
+    public <F> PureCFG<F> apply(Function5<? super A, ? super B, ? super C, ? super D, ? super E, ? extends F> apply) {
+      return mapN(fa, fb, fc, fd, fe, apply);
     }
   }
 }

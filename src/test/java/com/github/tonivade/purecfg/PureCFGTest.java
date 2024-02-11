@@ -140,7 +140,7 @@ class PureCFGTest extends IOTestSpec<String> {
   @Test
   void analyzeListOf() {
     PureCFG<Iterable<Tuple3<String, Integer, Boolean>>> iterable =
-        readIterable("list", mapN(readString("a"), readInt("b"), readBoolean("c"), Tuple::of));
+        readIterable("list", mapN(readString("a"), readInt("b"), readBoolean("c")).apply(Tuple::of));
 
     assertEquals("- list.[].a: String\n- list.[].b: Integer\n- list.[].c: Boolean\n", iterable.describe());
   }
@@ -224,11 +224,11 @@ class PureCFGTest extends IOTestSpec<String> {
     PureCFG<Integer> port = readInt("port");
     PureCFG<Boolean> active = readBoolean("active");
 
-    return mapN(host, port, active, Config::new);
+    return mapN(host, port, active).apply(Config::new);
   }
 
   private PureCFG<Iterable<User>> readUsers() {
-    PureCFG<User> userProgram = mapN(readString("name"), readString("pass"), User::new);
+    PureCFG<User> userProgram = mapN(readString("name"), readString("pass")).apply(User::new);
     return readIterable("user", userProgram);
   }
 }
