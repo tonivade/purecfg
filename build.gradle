@@ -68,7 +68,7 @@ publishing {
       from components.java
 
       pom {
-        name = 'PureDBC'
+        name = 'PureCFG'
         description = 'Pure Functional Configuration Library'
         url = 'https://github.com/tonivade/purecfg'
         inceptionYear = '2020'
