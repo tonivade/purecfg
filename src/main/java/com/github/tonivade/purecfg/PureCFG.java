@@ -71,13 +71,13 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
   public T unsafeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new IdVisitor(Key.empty(), source)),
-        Instances.applicative(Id_.class)).fix(toId()).value();
+        Instances.<Id_>applicative()).fix(toId()).value();
   }
 
   public Option<T> safeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new OptionVisitor(Key.empty(), source)),
-        Instances.applicative(Option_.class)).fix(toOption());
+        Instances.<Option_>applicative()).fix(toOption());
   }
 
   public Validation<Validation.Result<String>, T> validatedRun(Source source) {
@@ -252,21 +252,21 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return Instances.traverse(Sequence_.class)
-          .sequence(Instances.applicative(Id_.class), readAll(value))
+      return Instances.<Sequence_>traverse()
+          .sequence(Instances.<Id_>applicative(), readAll(value))
           .fix(toId()).map(s -> s.fix(SequenceOf::narrowK));
     }
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      return Instances.traverse(Sequence_.class)
-          .sequence(Instances.applicative(Id_.class), readAll(value))
+      return Instances.<Sequence_>traverse()
+          .sequence(Instances.<Id_>applicative(), readAll(value))
           .fix(toId()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Id<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), Instances.applicative(Id_.class)).fix(toId());
+      return value.next().foldMap(nestedInterpreter(value), Instances.<Id_>applicative()).fix(toId());
     }
 
     private <A> Interpreter<Id_> nestedInterpreter(DSL.ReadConfig<A> value) {
@@ -302,21 +302,21 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return Instances.traverse(Sequence_.class)
-          .sequence(Instances.applicative(Option_.class), readAll(value))
+      return Instances.<Sequence_>traverse()
+          .sequence(Instances.<Option_>applicative(), readAll(value))
           .fix(toOption()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      return Instances.traverse(Sequence_.class)
-          .sequence(Instances.applicative(Option_.class), readAll(value))
+      return Instances.<Sequence_>traverse()
+          .sequence(Instances.<Option_>applicative(), readAll(value))
           .fix(toOption()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Option<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), Instances.applicative(Option_.class)).fix(toOption());
+      return value.next().foldMap(nestedInterpreter(value), Instances.<Option_>applicative()).fix(toOption());
     }
 
     private <A> Interpreter<Option_> nestedInterpreter(DSL.ReadConfig<A> value) {
@@ -355,7 +355,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
       var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
       Semigroup<Result<String>> semigroup = Validation.Result::concat;
-      return Instances.traverse(Sequence_.class)
+      return Instances.<Sequence_>traverse()
           .sequence(instance.applicative(semigroup), readAll(value))
           .fix(toValidation()).map(s -> s.fix(toSequence()));
     }
@@ -364,7 +364,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
       Semigroup<Result<String>> semigroup = Validation.Result::concat;
-      return Instances.traverse(Sequence_.class)
+      return Instances.<Sequence_>traverse()
           .sequence(instance.applicative(semigroup), readAll(value))
           .fix(toValidation()).map(s -> s.fix(toSequence()));
     }

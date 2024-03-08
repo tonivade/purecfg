@@ -130,7 +130,7 @@ public interface Source {
    * @return the created source for the given arguments
    */
   static Source fromArgs(String... args) {
-    return from(SourceModule.parseArgs(args));
+    return from(parseArgs(args));
   }
 
   static Source from(Properties properties) {
@@ -185,7 +185,7 @@ public interface Source {
     }
 
     private Stream<String> iterableKeys(String key) {
-      String regex = "(" + key.replaceAll("\\.", ".") + "\\.\\d+).*";
+      String regex = "(" + key.replace("\\.", ".") + "\\.\\d+).*";
       return properties.keySet().stream()
           .map(Object::toString)
           .flatMap(k -> getKey(k, regex))
@@ -290,10 +290,8 @@ public interface Source {
       return (T) current;
     }
   }
-}
 
-interface SourceModule {
-  static Properties parseArgs(String[] args) {
+  private static Properties parseArgs(String[] args) {
     Properties properties = new Properties();
     for (int i = 0; i < args.length; i++) {
       String current = args[i];
