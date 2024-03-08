@@ -60,7 +60,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
   }
 
   @Override
-  public <R> PureCFG<R> ap(Kind<PureCFG_, Function1<? super T, ? extends R>> apply) {
+  public <R> PureCFG<R> ap(Kind<PureCFG_, ? extends Function1<? super T, ? extends R>> apply) {
     return new PureCFG<>(value.ap(apply.fix(PureCFGOf::narrowK).value));
   }
 
