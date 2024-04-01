@@ -8,7 +8,7 @@ nexusVersion = "1.3.0"
 tomljVersion = "1.1.1"
 errorproneVersion = "2.26.1"
 errorpronePluginVersion = "3.1.0"
-nullawayVersion = "0.10.24"
+nullawayVersion = "0.10.25"
 
 [libraries]
 purefunProcessor = { group = "com.github.tonivade", name = "purefun-processor", version.ref = "purefunVersion" }
