@@ -19,7 +19,6 @@ import com.github.tonivade.purefun.core.Function4;
 import com.github.tonivade.purefun.core.Function5;
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;
-import com.github.tonivade.purefun.Witness;
 import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.data.Sequence;
 import com.github.tonivade.purefun.data.SequenceOf;
@@ -64,7 +63,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     return new PureCFG<>(value.ap(apply.fix(PureCFGOf::narrowK).value));
   }
 
-  private <G extends Witness> Kind<G, T> foldMap(FunctionK<DSL_, G> functionK, Applicative<G> applicative) {
+  private <G> Kind<G, T> foldMap(FunctionK<DSL_, G> functionK, Applicative<G> applicative) {
     return value.foldMap(functionK, applicative);
   }
 
@@ -169,7 +168,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     return PureCFGApplicative.INSTANCE;
   }
 
-  private static final class Interpreter<F extends Witness> implements FunctionK<DSL_, F> {
+  private static final class Interpreter<F> implements FunctionK<DSL_, F> {
 
     private final DSL.Visitor<F> visitor;
 
@@ -183,7 +182,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     }
   }
 
-  private abstract static class AbstractVisitor<F extends Witness> implements DSL.Visitor<F> {
+  private abstract static class AbstractVisitor<F> implements DSL.Visitor<F> {
 
     private final Key baseKey;
     private final Source source;
