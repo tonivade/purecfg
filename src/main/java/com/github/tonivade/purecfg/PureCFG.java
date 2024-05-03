@@ -11,28 +11,23 @@ import static com.github.tonivade.purefun.type.IdOf.toId;
 import static com.github.tonivade.purefun.type.OptionOf.toOption;
 import static com.github.tonivade.purefun.type.ValidationOf.toValidation;
 
+import com.github.tonivade.purefun.HigherKind;
+import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.core.Applicable;
 import com.github.tonivade.purefun.core.Function1;
 import com.github.tonivade.purefun.core.Function2;
 import com.github.tonivade.purefun.core.Function3;
 import com.github.tonivade.purefun.core.Function4;
 import com.github.tonivade.purefun.core.Function5;
-import com.github.tonivade.purefun.HigherKind;
-import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.data.ImmutableArray;
 import com.github.tonivade.purefun.data.Sequence;
 import com.github.tonivade.purefun.data.SequenceOf;
-import com.github.tonivade.purefun.data.Sequence_;
 import com.github.tonivade.purefun.free.FreeAp;
 import com.github.tonivade.purefun.type.Const;
-import com.github.tonivade.purefun.type.Const_;
 import com.github.tonivade.purefun.type.Id;
-import com.github.tonivade.purefun.type.Id_;
 import com.github.tonivade.purefun.type.Option;
-import com.github.tonivade.purefun.type.Option_;
 import com.github.tonivade.purefun.type.Validation;
 import com.github.tonivade.purefun.type.Validation.Result;
-import com.github.tonivade.purefun.type.Validation_;
 import com.github.tonivade.purefun.typeclasses.Applicative;
 import com.github.tonivade.purefun.typeclasses.FunctionK;
 import com.github.tonivade.purefun.typeclasses.Instance;
@@ -41,15 +36,15 @@ import com.github.tonivade.purefun.typeclasses.Monoid;
 import com.github.tonivade.purefun.typeclasses.Semigroup;
 
 @HigherKind
-public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
+public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T> {
 
-  private final FreeAp<DSL_, T> value;
+  private final FreeAp<DSL<?>, T> value;
 
   private PureCFG(DSL<T> value) {
     this(FreeAp.lift(value));
   }
 
-  private PureCFG(FreeAp<DSL_, T> value) {
+  private PureCFG(FreeAp<DSL<?>, T> value) {
     this.value = checkNonNull(value);
   }
 
@@ -59,28 +54,28 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
   }
 
   @Override
-  public <R> PureCFG<R> ap(Kind<PureCFG_, ? extends Function1<? super T, ? extends R>> apply) {
+  public <R> PureCFG<R> ap(Kind<PureCFG<?>, ? extends Function1<? super T, ? extends R>> apply) {
     return new PureCFG<>(value.ap(apply.fix(PureCFGOf::narrowK).value));
   }
 
-  private <G> Kind<G, T> foldMap(FunctionK<DSL_, G> functionK, Applicative<G> applicative) {
+  private <G> Kind<G, T> foldMap(FunctionK<DSL<?>, G> functionK, Applicative<G> applicative) {
     return value.foldMap(functionK, applicative);
   }
 
   public T unsafeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new IdVisitor(Key.empty(), source)),
-        Instances.<Id_>applicative()).fix(toId()).value();
+        Instances.<Id<?>>applicative()).fix(toId()).value();
   }
 
   public Option<T> safeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new OptionVisitor(Key.empty(), source)),
-        Instances.<Option_>applicative()).fix(toOption());
+        Instances.<Option<?>>applicative()).fix(toOption());
   }
 
   public Validation<Validation.Result<String>, T> validatedRun(Source source) {
-    var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+    var instance = new Instance<Kind<Validation<?, ?>, Validation.Result<String>>>() {};
     Semigroup<Result<String>> semigroup = Validation.Result::concat;
     return value.foldMap(
         new Interpreter<>(new ValidationVisitor(Key.empty(), source)),
@@ -88,7 +83,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
   }
 
   public String describe() {
-    var instance = new Instance<Kind<Const_, String>>() {};
+    var instance = new Instance<Kind<Const<?, ?>, String>>() {};
     return value.analyze(
         new Interpreter<>(new ConstVisitor(Key.empty())),
         instance.applicative(Monoid.string()));
@@ -164,11 +159,11 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     return new PureCFG<>(new DSL.ReadConfig<>(key, PureCFGOf.narrowK(cfg)));
   }
 
-  public static Applicative<PureCFG_> applicative() {
+  public static Applicative<PureCFG<?>> applicative() {
     return PureCFGApplicative.INSTANCE;
   }
 
-  private static final class Interpreter<F> implements FunctionK<DSL_, F> {
+  private static final class Interpreter<F> implements FunctionK<DSL<?>, F> {
 
     private final DSL.Visitor<F> visitor;
 
@@ -177,7 +172,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     }
 
     @Override
-    public <T> Kind<F, T> apply(Kind<DSL_, ? extends T> from) {
+    public <T> Kind<F, T> apply(Kind<DSL<?>, ? extends T> from) {
       return from.fix(DSLOf::<T>narrowK).accept(visitor);
     }
   }
@@ -223,7 +218,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     }
   }
 
-  private static final class IdVisitor extends AbstractVisitor<Id_> {
+  private static final class IdVisitor extends AbstractVisitor<Id<?>> {
 
     private IdVisitor(Key baseKey, Source source) {
       super(baseKey, source);
@@ -251,29 +246,29 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return Instances.<Sequence_>traverse()
-          .sequence(Instances.<Id_>applicative(), readAll(value))
+      return Instances.<Sequence<?>>traverse()
+          .sequence(Instances.<Id<?>>applicative(), readAll(value))
           .fix(toId()).map(s -> s.fix(SequenceOf::narrowK));
     }
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      return Instances.<Sequence_>traverse()
-          .sequence(Instances.<Id_>applicative(), readAll(value))
+      return Instances.<Sequence<?>>traverse()
+          .sequence(Instances.<Id<?>>applicative(), readAll(value))
           .fix(toId()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Id<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), Instances.<Id_>applicative()).fix(toId());
+      return value.next().foldMap(nestedInterpreter(value), Instances.<Id<?>>applicative()).fix(toId());
     }
 
-    private <A> Interpreter<Id_> nestedInterpreter(DSL.ReadConfig<A> value) {
+    private <A> Interpreter<Id<?>> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new Interpreter<>(new IdVisitor(Key.with(value.key()), getSource()));
     }
   }
 
-  private static final class OptionVisitor extends AbstractVisitor<Option_> {
+  private static final class OptionVisitor extends AbstractVisitor<Option<?>> {
 
     private OptionVisitor(Key baseKey, Source source) {
       super(baseKey, source);
@@ -301,30 +296,30 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      return Instances.<Sequence_>traverse()
-          .sequence(Instances.<Option_>applicative(), readAll(value))
+      return Instances.<Sequence<?>>traverse()
+          .sequence(Instances.<Option<?>>applicative(), readAll(value))
           .fix(toOption()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      return Instances.<Sequence_>traverse()
-          .sequence(Instances.<Option_>applicative(), readAll(value))
+      return Instances.<Sequence<?>>traverse()
+          .sequence(Instances.<Option<?>>applicative(), readAll(value))
           .fix(toOption()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Option<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), Instances.<Option_>applicative()).fix(toOption());
+      return value.next().foldMap(nestedInterpreter(value), Instances.<Option<?>>applicative()).fix(toOption());
     }
 
-    private <A> Interpreter<Option_> nestedInterpreter(DSL.ReadConfig<A> value) {
+    private <A> Interpreter<Option<?>> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new Interpreter<>(new OptionVisitor(Key.with(value.key()), getSource()));
     }
   }
 
   private static final class ValidationVisitor
-      extends AbstractVisitor<Kind<Validation_, Validation.Result<String>>> {
+      extends AbstractVisitor<Kind<Validation<?, ?>, Validation.Result<String>>> {
 
     private ValidationVisitor(Key baseKey, Source source) {
       super(baseKey, source);
@@ -352,31 +347,31 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadIterable<T> value) {
-      var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      var instance = new Instance<Kind<Validation<?, ?>, Validation.Result<String>>>() {};
       Semigroup<Result<String>> semigroup = Validation.Result::concat;
-      return Instances.<Sequence_>traverse()
+      return Instances.<Sequence<?>>traverse()
           .sequence(instance.applicative(semigroup), readAll(value))
           .fix(toValidation()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <T> Validation<Validation.Result<String>, Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
-      var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      var instance = new Instance<Kind<Validation<?, ?>, Validation.Result<String>>>() {};
       Semigroup<Result<String>> semigroup = Validation.Result::concat;
-      return Instances.<Sequence_>traverse()
+      return Instances.<Sequence<?>>traverse()
           .sequence(instance.applicative(semigroup), readAll(value))
           .fix(toValidation()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Validation<Validation.Result<String>, A> visit(DSL.ReadConfig<A> value) {
-      var instance = new Instance<Kind<Validation_, Validation.Result<String>>>() {};
+      var instance = new Instance<Kind<Validation<?, ?>, Validation.Result<String>>>() {};
       Semigroup<Result<String>> semigroup = Validation.Result::concat;
       return value.next().foldMap(nestedInterpreter(value), instance.applicative(semigroup))
           .fix(toValidation());
     }
 
-    private <A> Interpreter<Kind<Validation_, Validation.Result<String>>> nestedInterpreter(DSL.ReadConfig<A> value) {
+    private <A> Interpreter<Kind<Validation<?, ?>, Validation.Result<String>>> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new Interpreter<>(new ValidationVisitor(Key.with(value.key()), getSource()));
     }
 
@@ -389,7 +384,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
     }
   }
 
-  private static final class ConstVisitor implements DSL.Visitor<Kind<Const_, String>> {
+  private static final class ConstVisitor implements DSL.Visitor<Kind<Const<?, ?>, String>> {
 
     private final Key baseKey;
 
@@ -429,7 +424,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
 
     @Override
     public <A> Const<String, A> visit(DSL.ReadConfig<A> value) {
-      var instance = new Instance<Kind<Const_, String>>() {};
+      var instance = new Instance<Kind<Const<?, ?>, String>>() {};
       return value.next().foldMap(
           nestedInterpreter(value), instance.applicative(Monoid.string())).fix(toConst());
     }
@@ -438,7 +433,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
       return Const.of("- " + extend(value) + ": " + type + "\n");
     }
 
-    private <A> Interpreter<Kind<Const_, String>> nestedInterpreter(DSL.ReadConfig<A> value) {
+    private <A> Interpreter<Kind<Const<?, ?>, String>> nestedInterpreter(DSL.ReadConfig<A> value) {
       return new Interpreter<>(new ConstVisitor(Key.with(extend(value))));
     }
 
@@ -491,7 +486,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG_, T> {
   }
 }
 
-interface PureCFGApplicative extends Applicative<PureCFG_> {
+interface PureCFGApplicative extends Applicative<PureCFG<?>> {
 
   PureCFGApplicative INSTANCE = new PureCFGApplicative() { };
 
@@ -501,8 +496,8 @@ interface PureCFGApplicative extends Applicative<PureCFG_> {
   }
 
   @Override
-  default <T, R> PureCFG<R> ap(Kind<PureCFG_, ? extends T> value,
-      Kind<PureCFG_, ? extends Function1<? super T, ? extends R>> apply) {
+  default <T, R> PureCFG<R> ap(Kind<PureCFG<?>, ? extends T> value,
+      Kind<PureCFG<?>, ? extends Function1<? super T, ? extends R>> apply) {
     return value.fix(PureCFGOf::<T>narrowK).ap(apply.fix(PureCFGOf::narrowK));
   }
 }

@@ -28,7 +28,7 @@ import com.github.tonivade.purecheck.spec.IOTestSpec;
 import com.github.tonivade.purefun.core.Tuple;
 import com.github.tonivade.purefun.core.Tuple3;
 import com.github.tonivade.purefun.data.ImmutableList;
-import com.github.tonivade.purefun.monad.IO_;
+import com.github.tonivade.purefun.monad.IO;
 import com.github.tonivade.purefun.type.Option;
 import com.github.tonivade.purefun.type.Validation;
 
@@ -194,7 +194,7 @@ class PureCFGTest extends IOTestSpec<String> {
     assertEquals("- server.host: String\n- server.port: Integer\n- server.active: Boolean\n", result);
   }
 
-  private TestSuite<IO_, String> test(PureCFG<Config> program, Source source) {
+  private TestSuite<IO<?>, String> test(PureCFG<Config> program, Source source) {
     return suite("PureCFG",
 
         it.should("read config from " + source)
