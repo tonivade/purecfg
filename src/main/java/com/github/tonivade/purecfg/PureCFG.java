@@ -65,13 +65,13 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T>
   public T unsafeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new IdVisitor(Key.empty(), source)),
-        Instances.<Id<?>>applicative()).fix(toId()).value();
+        Instances.applicative()).fix(toId()).value();
   }
 
   public Option<T> safeRun(Source source) {
     return value.foldMap(
         new Interpreter<>(new OptionVisitor(Key.empty(), source)),
-        Instances.<Option<?>>applicative()).fix(toOption());
+        Instances.applicative()).fix(toOption());
   }
 
   public Validation<Validation.Result<String>, T> validatedRun(Source source) {
@@ -247,20 +247,20 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T>
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadIterable<T> value) {
       return Instances.<Sequence<?>>traverse()
-          .sequence(Instances.<Id<?>>applicative(), readAll(value))
+          .sequence(Instances.applicative(), readAll(value))
           .fix(toId()).map(s -> s.fix(SequenceOf::narrowK));
     }
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       return Instances.<Sequence<?>>traverse()
-          .sequence(Instances.<Id<?>>applicative(), readAll(value))
+          .sequence(Instances.applicative(), readAll(value))
           .fix(toId()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Id<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), Instances.<Id<?>>applicative()).fix(toId());
+      return value.next().foldMap(nestedInterpreter(value), Instances.applicative()).fix(toId());
     }
 
     private <A> Interpreter<Id<?>> nestedInterpreter(DSL.ReadConfig<A> value) {
@@ -297,20 +297,20 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T>
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadIterable<T> value) {
       return Instances.<Sequence<?>>traverse()
-          .sequence(Instances.<Option<?>>applicative(), readAll(value))
+          .sequence(Instances.applicative(), readAll(value))
           .fix(toOption()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <T> Option<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       return Instances.<Sequence<?>>traverse()
-          .sequence(Instances.<Option<?>>applicative(), readAll(value))
+          .sequence(Instances.applicative(), readAll(value))
           .fix(toOption()).map(s -> s.fix(toSequence()));
     }
 
     @Override
     public <A> Option<A> visit(DSL.ReadConfig<A> value) {
-      return value.next().foldMap(nestedInterpreter(value), Instances.<Option<?>>applicative()).fix(toOption());
+      return value.next().foldMap(nestedInterpreter(value), Instances.applicative()).fix(toOption());
     }
 
     private <A> Interpreter<Option<?>> nestedInterpreter(DSL.ReadConfig<A> value) {
