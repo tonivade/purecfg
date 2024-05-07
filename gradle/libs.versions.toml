@@ -9,6 +9,7 @@ tomljVersion = "1.1.1"
 errorproneVersion = "2.27.1"
 errorpronePluginVersion = "3.1.0"
 nullawayVersion = "0.10.26"
+eclipseVersion = "3.44.0"
 
 [libraries]
 purefunProcessor = { group = "com.github.tonivade", name = "purefun-processor", version.ref = "purefunVersion" }
@@ -27,3 +28,4 @@ errorprone = { group = "com.google.errorprone", name = "error_prone_core", versi
 versions = { id = "com.github.ben-manes.versions", version.ref = "versionsVersion" }
 nexus = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexusVersion" }
 errorprone = { id = "net.ltgt.errorprone", version.ref = "errorpronePluginVersion"}
+eclipse = { id = "com.diffplug.eclipse.apt", version.ref = "eclipseVersion" }
