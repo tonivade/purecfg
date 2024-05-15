@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
@@ -233,71 +232,8 @@ class PureCFGTest extends IOTestSpec<String> {
   }
 }
 
-final class Config {
-
-  final String host;
-  final int port;
-  final boolean active;
-
-  Config(String host, int port, boolean active) {
-    this.host = host;
-    this.port = port;
-    this.active = active;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Config other = (Config) o;
-    return this.port == other.port &&
-        this.active == other.active &&
-        Objects.equals(this.host, other.host);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(host, port, active);
-  }
-
-  @Override
-  public String toString() {
-    return "Config{" +
-        "host='" + host + '\'' +
-        ", port=" + port +
-        ", active=" + active +
-        '}';
-  }
+record Config(String host, int port, boolean active) {
 }
 
-final class User {
-
-  final String name;
-  final String pass;
-
-  User(String name, String pass) {
-    this.name = name;
-    this.pass = pass;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    User other = (User) o;
-    return Objects.equals(this.name, other.name) && Objects.equals(this.pass, other.pass);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(name, pass);
-  }
-
-  @Override
-  public String toString() {
-    return "User{" +
-        "name='" + name + '\'' +
-        ", pass='" + pass + '\'' +
-        '}';
-  }
+record User(String name, String pass) {
 }
