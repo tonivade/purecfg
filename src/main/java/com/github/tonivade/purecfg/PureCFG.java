@@ -56,7 +56,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T>
     return new PureCFG<>(value.ap(apply.fix(PureCFGOf::toPureCFG).value));
   }
 
-  private <G> Kind<G, T> foldMap(FunctionK<DSL<?>, G> functionK, Applicative<G> applicative) {
+  private <G extends Kind<G, ?>> Kind<G, T> foldMap(FunctionK<DSL<?>, G> functionK, Applicative<G> applicative) {
     return value.foldMap(functionK, applicative);
   }
 
@@ -161,7 +161,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T>
     return PureCFGApplicative.INSTANCE;
   }
 
-  private static final class Interpreter<F> implements FunctionK<DSL<?>, F> {
+  private static final class Interpreter<F extends Kind<F, ?>> implements FunctionK<DSL<?>, F> {
 
     private final DSL.Visitor<F> visitor;
 
@@ -175,7 +175,7 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T>
     }
   }
 
-  private abstract static class AbstractVisitor<F> implements DSL.Visitor<F> {
+  private abstract static class AbstractVisitor<F extends Kind<F, ?>> implements DSL.Visitor<F> {
 
     private final Key baseKey;
     private final Source source;

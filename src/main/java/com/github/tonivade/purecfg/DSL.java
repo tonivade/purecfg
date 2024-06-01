@@ -15,9 +15,9 @@ public sealed interface DSL<T> extends DSLOf<T> {
 
   String key();
 
-  <F> Kind<F, T> accept(Visitor<F> visitor);
+  <F extends Kind<F, ?>> Kind<F, T> accept(Visitor<F> visitor);
 
-  interface Visitor<F> {
+  interface Visitor<F extends Kind<F, ?>> {
 
     <T> Kind<F, T> visit(Pure<T> value);
 
@@ -46,7 +46,7 @@ public sealed interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F> Kind<F, T> accept(Visitor<F> visitor) {
+    public <F extends Kind<F, ?>> Kind<F, T> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -58,7 +58,7 @@ public sealed interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F> Kind<F, Integer> accept(Visitor<F> visitor) {
+    public <F extends Kind<F, ?>> Kind<F, Integer> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -70,7 +70,7 @@ public sealed interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F> Kind<F, String> accept(Visitor<F> visitor) {
+    public <F extends Kind<F, ?>> Kind<F, String> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -82,7 +82,7 @@ public sealed interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F> Kind<F, Boolean> accept(Visitor<F> visitor) {
+    public <F extends Kind<F, ?>> Kind<F, Boolean> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -95,7 +95,7 @@ public sealed interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F> Kind<F, Iterable<T>> accept(Visitor<F> visitor) {
+    public <F extends Kind<F, ?>> Kind<F, Iterable<T>> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -108,7 +108,7 @@ public sealed interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F> Kind<F, Iterable<T>> accept(Visitor<F> visitor) {
+    public <F extends Kind<F, ?>> Kind<F, Iterable<T>> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
@@ -121,7 +121,7 @@ public sealed interface DSL<T> extends DSLOf<T> {
     }
 
     @Override
-    public <F> Kind<F, T> accept(Visitor<F> visitor) {
+    public <F extends Kind<F, ?>> Kind<F, T> accept(Visitor<F> visitor) {
       return visitor.visit(this);
     }
   }
