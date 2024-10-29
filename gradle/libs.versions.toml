@@ -8,7 +8,7 @@ nexusVersion = "2.0.0"
 tomljVersion = "1.1.1"
 errorproneVersion = "2.35.1"
 errorpronePluginVersion = "4.1.0"
-nullawayVersion = "0.12.0"
+nullawayVersion = "0.12.1"
 eclipseVersion = "4.1.0"
 
 [libraries]
