@@ -72,9 +72,11 @@ dependencies {
   implementation libs.purefunEffect
   runtimeOnly libs.purefunInstances
   implementation libs.tomlj
-  testImplementation libs.purecheck
+
+  testImplementation platform(libs.junitBom)
   testImplementation libs.junitJupiter
-  testImplementation libs.junitRunner
+  testRuntimeOnly libs.junitLauncher
+  testImplementation libs.purecheck
 }
 
 publishing {
