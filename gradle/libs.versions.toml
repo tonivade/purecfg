@@ -8,7 +8,7 @@ tomljVersion = "1.1.1"
 errorproneVersion = "2.42.0"
 errorpronePluginVersion = "4.3.0"
 nullawayVersion = "0.12.10"
-eclipseVersion = "4.4.0"
+eclipseVersion = "4.4.1"
 
 [libraries]
 purefunProcessor = { group = "com.github.tonivade", name = "purefun-processor", version.ref = "purefunVersion" }
