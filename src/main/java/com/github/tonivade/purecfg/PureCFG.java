@@ -5,6 +5,7 @@
 package com.github.tonivade.purecfg;
 
 import static com.github.tonivade.purefun.core.Precondition.checkNonNull;
+
 import com.github.tonivade.purefun.HigherKind;
 import com.github.tonivade.purefun.Kind;
 import com.github.tonivade.purefun.core.Applicable;
@@ -13,7 +14,8 @@ import com.github.tonivade.purefun.core.Function2;
 import com.github.tonivade.purefun.core.Function3;
 import com.github.tonivade.purefun.core.Function4;
 import com.github.tonivade.purefun.core.Function5;
-import com.github.tonivade.purefun.data.ImmutableArray;
+import com.github.tonivade.purefun.data.Finisher;
+import com.github.tonivade.purefun.data.Pipeline;
 import com.github.tonivade.purefun.data.Sequence;
 import com.github.tonivade.purefun.data.SequenceOf;
 import com.github.tonivade.purefun.free.FreeAp;
@@ -207,12 +209,14 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T>
 
     protected <T> Sequence<Kind<F, T>> readAll(DSL.ReadPrimitiveIterable<T> value) {
       Iterable<DSL<T>> properties = source.getIterable(extend(value), value.type());
-      return ImmutableArray.from(properties).map(dsl -> dsl.accept(this));
+      return Pipeline.<DSL<T>>identity()
+          .map(dsl -> dsl.accept(this)).finish(Finisher.toImmutableArray(properties));
     }
 
     protected <T> Sequence<Kind<F, T>> readAll(DSL.ReadIterable<T> value) {
       Iterable<DSL<T>> properties = source.getIterable(extend(value), value.next());
-      return ImmutableArray.from(properties).map(dsl -> dsl.accept(this));
+      return Pipeline.<DSL<T>>identity()
+          .map(dsl -> dsl.accept(this)).finish(Finisher.toImmutableArray(properties));
     }
   }
 
@@ -246,14 +250,14 @@ public final class PureCFG<T> implements PureCFGOf<T>, Applicable<PureCFG<?>, T>
     public <T> Id<Iterable<T>> visit(DSL.ReadIterable<T> value) {
       return Instances.<Sequence<?>>traverse()
           .sequence(Instances.applicative(), readAll(value))
-          .fix(IdOf::toId).map(s -> s.fix(SequenceOf::toSequence));
+          .fix(IdOf::toId).map(SequenceOf::toSequence);
     }
 
     @Override
     public <T> Id<Iterable<T>> visit(DSL.ReadPrimitiveIterable<T> value) {
       return Instances.<Sequence<?>>traverse()
           .sequence(Instances.applicative(), readAll(value))
-          .fix(IdOf::toId).map(s -> s.fix(SequenceOf::toSequence));
+          .fix(IdOf::toId).map(SequenceOf::toSequence);
     }
 
     @Override
