@@ -141,7 +141,11 @@ class PureCFGTest extends IOTestSpec<String> {
     PureCFG<Iterable<Tuple3<String, Integer, Boolean>>> iterable =
         readIterable("list", mapN(readString("a"), readInt("b"), readBoolean("c")).apply(Tuple::of));
 
-    assertEquals("- list.[].a: String\n- list.[].b: Integer\n- list.[].c: Boolean\n", iterable.describe());
+    assertEquals("""
+        - list.[].a: String
+        - list.[].b: Integer
+        - list.[].c: Boolean
+        """, iterable.describe());
   }
 
   @Test
@@ -190,28 +194,28 @@ class PureCFGTest extends IOTestSpec<String> {
 
     String result = program.describe();
 
-    assertEquals("- server.host: String\n- server.port: Integer\n- server.active: Boolean\n", result);
+    assertEquals("""
+        - server.host: String
+        - server.port: Integer
+        - server.active: Boolean
+        """, result);
   }
 
   private TestSuite<IO<?>, String> test(PureCFG<Config> program, Source source) {
     return suite("PureCFG",
-
         it.should("read config from " + source)
           .given(source)
           .when(program::unsafeRun)
           .then(equalsTo(expectedConfig)),
-
         it.should("read config form " + source)
           .given(source)
           .when(program::safeRun)
           .then(equalsTo(expectedConfig).compose(Option::getOrElseThrow)),
-
         it.should("read config form " + source)
           .given(source)
           .when(program::validatedRun)
           .then(equalsTo(expectedConfig).compose(Validation::get))
-
-        );
+      );
   }
 
   private PureCFG<Config> readConfig() {
