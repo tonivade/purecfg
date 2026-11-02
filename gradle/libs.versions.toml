@@ -14,7 +14,6 @@ eclipseVersion = "4.4.1"
 purefunProcessor = { group = "com.github.tonivade", name = "purefun-processor", version.ref = "purefunVersion" }
 purefunFree = { group = "com.github.tonivade", name = "purefun-free", version.ref = "purefunVersion" }
 purefunMonad = { group = "com.github.tonivade", name = "purefun-monad", version.ref = "purefunVersion" }
-purefunEffect = { group = "com.github.tonivade", name = "purefun-effect", version.ref = "purefunVersion" }
 purefunInstances = { group = "com.github.tonivade", name = "purefun-instances", version.ref = "purefunVersion" }
 tomlj = { group = "org.tomlj", name = "tomlj", version.ref = "tomljVersion"}
 purecheck = { group = "com.github.tonivade", name = "purecheck", version.ref = "purecheckVersion" }
