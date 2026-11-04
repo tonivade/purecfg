@@ -80,7 +80,6 @@ dependencies {
   annotationProcessor libs.purefunProcessor
   api libs.purefunFree
   implementation libs.purefunMonad
-  implementation libs.purefunEffect
   runtimeOnly libs.purefunInstances
   implementation libs.tomlj
 
